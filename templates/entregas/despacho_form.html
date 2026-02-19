@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block title %}Novo Despacho{% endblock %}
+{% block nav_desp %}active{% endblock %}
+{% block content %}
+<div class="container py-4" style="max-width:520px">
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <a href="{% url 'entregas:dashboard' %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i></a>
+        <div>
+            <h1 style="color:#fff;font-weight:700;font-size:1.4rem;margin:0">
+                <i class="bi bi-send me-2" style="color:var(--verm)"></i>Novo Despacho
+            </h1>
+            <p class="mb-0" style="color:var(--muted);font-size:.83rem">Informe o motoboy e quantas entregas ele saiu</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body p-4">
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label">Motoboy *</label>
+                    {{ form.motoboy }}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Quantidade de Entregas *</label>
+                    {{ form.qtd_saida }}
+                    <div class="form-text" style="color:var(--muted)">Total de pedidos que saíram com o motoboy</div>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label">Observações</label>
+                    {{ form.observacoes }}
+                </div>
+                <button type="submit" class="btn btn-verm w-100 py-2">
+                    <i class="bi bi-send-fill me-2"></i>Despachar Motoboy
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% block title %}Controle de Caixa{% endblock %}
+{% block nav_caixa %}active{% endblock %}
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="page-title"><i class="bi bi-wallet2 me-2" style="color:var(--vermelho)"></i>Controle de Caixa</h1>
+        {% if not caixa_aberto %}
+        <a href="{% url 'caixa:abrir' %}" class="btn btn-success"><i class="bi bi-lock-open me-1"></i>Abrir Caixa</a>
+        {% else %}
+        <div class="d-flex gap-2">
+            <span class="badge bg-success fs-6 p-2"><i class="bi bi-circle-fill me-1"></i>Caixa Aberto</span>
+            <a href="{% url 'caixa:fechar' caixa_aberto.pk %}" class="btn btn-outline-danger">
+                <i class="bi bi-lock me-1"></i>Fechar Caixa
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if caixa_aberto %}
+    <div class="alert alert-info mb-3">
+        <i class="bi bi-info-circle me-2"></i>
+        Caixa aberto por <strong>{{ caixa_aberto.responsavel }}</strong> às {{ caixa_aberto.data_abertura|date:"H:i" }}
+        com <strong>R$ {{ caixa_aberto.total_abertura|floatformat:2 }}</strong>
+    </div>
+    {% endif %}
+
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr><th>Data</th><th>Responsável</th><th>Abertura</th><th>Fechamento</th><th>Diferença</th><th>Status</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                        {% for c in caixas %}
+                        <tr>
+                            <td class="text-muted small">{{ c.data_abertura|date:"d/m/Y H:i" }}</td>
+                            <td class="fw-medium">{{ c.responsavel }}</td>
+                            <td class="text-info">R$ {{ c.total_abertura|floatformat:2 }}</td>
+                            <td>{% if c.total_fechamento %}R$ {{ c.total_fechamento|floatformat:2 }}{% else %}—{% endif %}</td>
+                            <td>
+                                {% if c.total_fechamento %}
+                                    {% with diff=c.total_fechamento|add:c.total_abertura %}
+                                    <span class="{% if c.total_fechamento >= c.total_abertura %}text-success{% else %}text-danger{% endif %}">
+                                        R$ {{ c.total_fechamento|floatformat:2 }}
+                                    </span>
+                                    {% endwith %}
+                                {% else %}—{% endif %}
+                            </td>
+                            <td><span class="badge {% if c.status == 'aberto' %}bg-success{% else %}bg-secondary{% endif %}">{{ c.get_status_display }}</span></td>
+                            <td>
+                                <div class="d-flex gap-1">
+                                    <a href="{% url 'caixa:detalhe' c.pk %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-eye"></i></a>
+                                    {% if c.status == 'fechado' %}
+                                    <a href="{% url 'caixa:relatorio' c.pk %}" class="btn btn-sm btn-outline-info"><i class="bi bi-file-text"></i></a>
+                                    {% elif c.status == 'aberto' %}
+                                    <a href="{% url 'caixa:fechar' c.pk %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-lock"></i></a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="7" class="text-center text-muted py-4">Nenhum caixa registrado</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

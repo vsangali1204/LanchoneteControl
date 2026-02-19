@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% block title %}Relatório de Caixa{% endblock %}
+{% block nav_caixa %}active{% endblock %}
+{% block content %}
+<div class="container py-4" style="max-width:900px">
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <a href="{% url 'caixa:lista' %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i></a>
+        <div class="flex-grow-1">
+            <h1 class="page-title"><i class="bi bi-file-earmark-bar-graph me-2" style="color:var(--vermelho)"></i>Relatório de Caixa</h1>
+            <p class="page-subtitle mb-0">{{ caixa.responsavel }} &bull; {{ caixa.data_abertura|date:"d/m/Y H:i" }} → {% if caixa.data_fechamento %}{{ caixa.data_fechamento|date:"H:i" }}{% else %}—{% endif %}</p>
+        </div>
+        <button onclick="window.print()" class="btn btn-outline-secondary"><i class="bi bi-printer me-1"></i>Imprimir</button>
+    </div>
+
+    <!-- Resumo -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="stat-card text-center">
+                <div class="stat-label">Total Abertura</div>
+                <div class="stat-value text-info">R$ {{ caixa.total_abertura|floatformat:2 }}</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card text-center">
+                <div class="stat-label">Total Fechamento</div>
+                <div class="stat-value">R$ {{ caixa.total_fechamento|floatformat:2 }}</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card text-center {% if diferenca < 0 %}danger{% endif %}">
+                <div class="stat-label">Diferença</div>
+                <div class="stat-value {% if diferenca >= 0 %}text-success{% else %}text-danger{% endif %}">
+                    {% if diferenca >= 0 %}+{% endif %}R$ {{ diferenca|floatformat:2 }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if diferenca == 0 %}
+    <div class="alert alert-success mb-3"><i class="bi bi-check-circle-fill me-2"></i>Caixa fechado sem diferenças. Tudo confere!</div>
+    {% elif diferenca > 0 %}
+    <div class="alert alert-warning mb-3"><i class="bi bi-exclamation-triangle me-2"></i>Sobram R$ {{ diferenca|floatformat:2 }} no caixa.</div>
+    {% else %}
+    <div class="alert alert-danger mb-3"><i class="bi bi-exclamation-triangle-fill me-2"></i>Faltam R$ {{ diferenca|floatformat:2|slice:"1:" }} no caixa!</div>
+    {% endif %}
+
+    <!-- Tabela comparativa -->
+    {% if comparacao %}
+    <div class="card">
+        <div class="card-header"><i class="bi bi-table me-2"></i>Comparativo Abertura x Fechamento</div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Denominação</th>
+                            <th class="text-center">Qtd. Abertura</th>
+                            <th class="text-center">Valor Abertura</th>
+                            <th class="text-center">Qtd. Fechamento</th>
+                            <th class="text-center">Valor Fechamento</th>
+                            <th class="text-center">Diferença</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in comparacao %}
+                        <tr class="{% if row.diferenca != 0 %}{% if row.diferenca < 0 %}table-danger bg-opacity-10{% else %}table-success bg-opacity-10{% endif %}{% endif %}">
+                            <td>{{ row.label }}</td>
+                            <td class="text-center">{{ row.qtd_abertura }}</td>
+                            <td class="text-center text-info">R$ {{ row.sub_abertura|floatformat:2 }}</td>
+                            <td class="text-center">{{ row.qtd_fechamento }}</td>
+                            <td class="text-center">R$ {{ row.sub_fechamento|floatformat:2 }}</td>
+                            <td class="text-center fw-bold {% if row.diferenca >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                {% if row.diferenca >= 0 %}+{% endif %}R$ {{ row.diferenca|floatformat:2 }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot class="fw-bold">
+                        <tr>
+                            <td>TOTAL</td>
+                            <td></td>
+                            <td class="text-center text-info">R$ {{ caixa.total_abertura|floatformat:2 }}</td>
+                            <td></td>
+                            <td class="text-center">R$ {{ caixa.total_fechamento|floatformat:2 }}</td>
+                            <td class="text-center {% if diferenca >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                {% if diferenca >= 0 %}+{% endif %}R$ {{ diferenca|floatformat:2 }}
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

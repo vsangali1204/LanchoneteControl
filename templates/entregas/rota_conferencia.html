@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+{% block title %}Conferência — Rota #{{ rota.pk }}{% endblock %}
+{% block nav_entregas %}active{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <a href="{% url 'entregas:rota_detalhe' rota.pk %}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <div>
+            <h1 class="page-title"><i class="bi bi-clipboard-check me-2" style="color:var(--vermelho)"></i>Conferência de Retorno</h1>
+            <p class="page-subtitle mb-0">Rota #{{ rota.pk }} — {{ rota.motoboy.nome }} — Retornou às {{ rota.data_retorno|date:"H:i" }}</p>
+        </div>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="row g-3">
+            <!-- Resumo financeiro -->
+            <div class="col-12">
+                <div class="card" style="border-color: var(--vermelho)">
+                    <div class="card-header" style="background: rgba(232,57,14,0.1)">
+                        <i class="bi bi-cash-coin me-2" style="color:var(--vermelho)"></i>
+                        <strong>Conferência de Dinheiro</strong>
+                    </div>
+                    <div class="card-body">
+                        <div class="row align-items-center g-3">
+                            <div class="col-md-4">
+                                <div class="stat-card text-center">
+                                    <div class="stat-label mb-1">Dinheiro Esperado</div>
+                                    <div class="stat-value text-success">R$ {{ rota.total_dinheiro_esperado|floatformat:2 }}</div>
+                                    <div class="text-muted small mt-1">
+                                        Pedidos em dinheiro:
+                                        {% for e in entregas %}{% if e.forma_pagamento == 'dinheiro' %}R${{ e.valor_dinheiro|floatformat:2 }} {% endif %}{% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold text-white">{{ conf_form.dinheiro_entregue.label }}</label>
+                                {{ conf_form.dinheiro_entregue }}
+                                <div class="form-text">Informe o total entregue pelo motoboy</div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="stat-card text-center" id="card_diferenca">
+                                    <div class="stat-label mb-1">Diferença</div>
+                                    <div class="stat-value" id="val_diferenca" style="color:var(--vermelho)">—</div>
+                                    <div class="text-muted small" id="txt_diferenca">Preencha o valor entregue</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <label class="form-label">Observações</label>
+                            {{ conf_form.observacoes }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Entregas - marcar status e comprovantes -->
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="bi bi-list-check me-2"></i>Status das Entregas e Comprovantes
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Cliente</th>
+                                        <th>Endereço</th>
+                                        <th>Pagamento</th>
+                                        <th>Status</th>
+                                        <th class="text-center">Comprovante</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for e in entregas %}
+                                    <tr>
+                                        <td class="text-muted">{{ forloop.counter }}</td>
+                                        <td class="fw-medium">{{ e.cliente }}</td>
+                                        <td class="text-muted small">{{ e.endereco|truncatechars:40 }}</td>
+                                        <td>
+                                            {% if e.forma_pagamento == 'dinheiro' %}
+                                            <span class="badge" style="background:rgba(40,167,69,0.2);color:#5cb85c">
+                                                <i class="bi bi-cash me-1"></i>R${{ e.valor_dinheiro|floatformat:2 }}
+                                            </span>
+                                            {% elif e.forma_pagamento == 'cartao' %}
+                                            <span class="badge" style="background:rgba(13,110,253,0.2);color:#4da6ff">
+                                                <i class="bi bi-credit-card me-1"></i>Cartão
+                                            </span>
+                                            {% else %}
+                                            <span class="badge" style="background:rgba(111,66,193,0.2);color:#9d6fe8">
+                                                <i class="bi bi-phone me-1"></i>Online
+                                            </span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <select name="status_{{ e.pk }}" class="form-select form-select-sm bg-dark text-light border-secondary" style="width:150px">
+                                                <option value="pendente" {% if e.status == 'pendente' %}selected{% endif %}>Pendente</option>
+                                                <option value="entregue" {% if e.status == 'entregue' %}selected{% endif %}>✓ Entregue</option>
+                                                <option value="nao_entregue" {% if e.status == 'nao_entregue' %}selected{% endif %}>✗ Não Entregue</option>
+                                            </select>
+                                        </td>
+                                        <td class="text-center">
+                                            <div class="form-check d-flex justify-content-center">
+                                                <input class="form-check-input" type="checkbox"
+                                                       name="comprovante_{{ e.pk }}"
+                                                       {% if e.comprovante_entregue %}checked{% endif %}>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botão finalizar -->
+            <div class="col-12">
+                <button type="submit" class="btn btn-vermelho btn-lg w-100"
+                        onclick="return confirm('Finalizar conferência da rota #{{ rota.pk }}?')">
+                    <i class="bi bi-check-circle-fill me-2"></i>Finalizar Conferência
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+{% block extra_js %}
+<script>
+    const inputDinheiro = document.querySelector('input[name="dinheiro_entregue"]');
+    const esperado = {{ rota.total_dinheiro_esperado }};
+    const valEl = document.getElementById('val_diferenca');
+    const txtEl = document.getElementById('txt_diferenca');
+
+    function calcDiferenca() {
+        const entregue = parseFloat(inputDinheiro.value) || 0;
+        const diff = entregue - esperado;
+        valEl.textContent = 'R$ ' + diff.toFixed(2).replace('.', ',');
+        if (diff > 0) {
+            valEl.style.color = '#5cb85c';
+            txtEl.textContent = 'Sobrou dinheiro';
+        } else if (diff < 0) {
+            valEl.style.color = 'var(--vermelho)';
+            txtEl.textContent = 'Falta dinheiro!';
+        } else {
+            valEl.style.color = '#5cb85c';
+            txtEl.textContent = 'Conferido! ✓';
+        }
+    }
+
+    if (inputDinheiro) inputDinheiro.addEventListener('input', calcDiferenca);
+</script>
+{% endblock %}
+{% endblock %}

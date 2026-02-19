@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block title %}Caixa {{ caixa.data_abertura|date:"d/m/Y" }}{% endblock %}
+{% block nav_caixa %}active{% endblock %}
+{% block content %}
+<div class="container py-4" style="max-width:700px">
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <a href="{% url 'caixa:lista' %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i></a>
+        <div class="flex-grow-1">
+            <h1 class="page-title">Caixa {{ caixa.data_abertura|date:"d/m/Y" }}</h1>
+            <p class="page-subtitle mb-0">{{ caixa.responsavel }} &bull; <span class="badge {% if caixa.status == 'aberto' %}bg-success{% else %}bg-secondary{% endif %}">{{ caixa.get_status_display }}</span></p>
+        </div>
+        {% if caixa.status == 'aberto' %}
+        <a href="{% url 'caixa:fechar' caixa.pk %}" class="btn btn-outline-danger"><i class="bi bi-lock me-1"></i>Fechar</a>
+        {% else %}
+        <a href="{% url 'caixa:relatorio' caixa.pk %}" class="btn btn-outline-info"><i class="bi bi-file-text me-1"></i>Relatório</a>
+        {% endif %}
+    </div>
+
+    <div class="row g-3">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header"><i class="bi bi-lock-open me-2 text-success"></i>Abertura</div>
+                <div class="card-body">
+                    {% for c in contas_abertura %}
+                    <div class="d-flex justify-content-between py-1 border-bottom border-secondary">
+                        <span class="text-muted">{{ c.get_denominacao_display }}</span>
+                        <span>{{ c.quantidade }}x = <strong>R$ {{ c.subtotal|floatformat:2 }}</strong></span>
+                    </div>
+                    {% empty %}<p class="text-muted">Sem registro</p>{% endfor %}
+                    <div class="d-flex justify-content-between mt-3 fw-bold fs-5">
+                        <span>Total</span>
+                        <span class="text-success">R$ {{ caixa.total_abertura|floatformat:2 }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% if contas_fechamento %}
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header"><i class="bi bi-lock me-2 text-danger"></i>Fechamento</div>
+                <div class="card-body">
+                    {% for c in contas_fechamento %}
+                    <div class="d-flex justify-content-between py-1 border-bottom border-secondary">
+                        <span class="text-muted">{{ c.get_denominacao_display }}</span>
+                        <span>{{ c.quantidade }}x = <strong>R$ {{ c.subtotal|floatformat:2 }}</strong></span>
+                    </div>
+                    {% endfor %}
+                    <div class="d-flex justify-content-between mt-3 fw-bold fs-5">
+                        <span>Total</span>
+                        <span class="{% if diferenca >= 0 %}text-success{% else %}text-danger{% endif %}">R$ {{ caixa.total_fechamento|floatformat:2 }}</span>
+                    </div>
+                    {% if diferenca is not None %}
+                    <div class="mt-2 p-2 rounded {% if diferenca >= 0 %}bg-success bg-opacity-10{% else %}bg-danger bg-opacity-10{% endif %}">
+                        <span class="small fw-bold">Diferença: R$ {{ diferenca|floatformat:2 }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

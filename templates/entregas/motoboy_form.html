@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}{{ titulo }}{% endblock %}
+{% block nav_entregas %}active{% endblock %}
+{% block content %}
+<div class="container py-4" style="max-width:500px">
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <a href="{% url 'entregas:motoboy_lista' %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i></a>
+        <h1 class="page-title mb-0">{{ titulo }}</h1>
+    </div>
+    <div class="card">
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label">Nome *</label>{{ form.nome }}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Telefone</label>{{ form.telefone }}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Valor Fixo (R$)</label>
+                    {{ form.valor_fixo }}
+                    <div class="form-text text-muted">Valor fixo por turno/dia</div>
+                </div>
+                <div class="mb-3 form-check">
+                    {{ form.ativo }}
+                    <label class="form-check-label text-light">Ativo</label>
+                </div>
+                <button type="submit" class="btn btn-vermelho w-100">
+                    <i class="bi bi-check-lg me-1"></i>Salvar
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

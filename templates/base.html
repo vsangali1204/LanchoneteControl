@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="pt-br" data-bs-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>
+      {% block title %}
+        Lanchonete
+      {% endblock %}
+    </title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+    <style>
+      :root {
+        --verm: #e8390e;
+        --verm-dk: #b82e0b;
+        --verm-glow: rgba(232, 57, 14, 0.25);
+        --bg: #0d0d0d;
+        --card: #1a1a1a;
+        --card2: #222;
+        --border: #2a2a2a;
+        --muted: #777;
+      }
+      body {
+        background: var(--bg);
+        font-family: 'Segoe UI', system-ui, sans-serif;
+      }
+      /* navbar */
+      .navbar-custom {
+        background: linear-gradient(135deg, #111, #1a0905);
+        border-bottom: 2px solid var(--verm);
+        box-shadow: 0 2px 20px var(--verm-glow);
+      }
+      .navbar-brand {
+        font-weight: 800;
+        letter-spacing: 1px;
+      }
+      .nav-link {
+        color: #ccc !important;
+        border-radius: 6px;
+        padding: 6px 12px !important;
+        transition: 0.2s;
+      }
+      .nav-link:hover,
+      .nav-link.active {
+        color: #fff !important;
+        background: rgba(232, 57, 14, 0.15);
+      }
+      /* cards */
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+      }
+      .card-header {
+        background: var(--card2);
+        border-bottom: 1px solid var(--border);
+        border-radius: 12px 12px 0 0 !important;
+        font-weight: 600;
+      }
+      /* stat */
+      .stat-card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 18px;
+        transition: 0.2s;
+      }
+      .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+      }
+      .stat-card.red {
+        border-color: var(--verm);
+      }
+      .stat-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+      }
+      .ic-red {
+        background: rgba(232, 57, 14, 0.15);
+        color: var(--verm);
+      }
+      .ic-ora {
+        background: rgba(255, 140, 0, 0.15);
+        color: #ff8c00;
+      }
+      .ic-grn {
+        background: rgba(40, 167, 69, 0.15);
+        color: #28a745;
+      }
+      .ic-blu {
+        background: rgba(13, 110, 253, 0.15);
+        color: #4da6ff;
+      }
+      .stat-val {
+        font-size: 1.9rem;
+        font-weight: 700;
+        color: #fff;
+        line-height: 1;
+      }
+      .stat-lbl {
+        color: var(--muted);
+        font-size: 0.82rem;
+        margin-top: 4px;
+      }
+      /* btns */
+      .btn-verm {
+        background: var(--verm);
+        border-color: var(--verm);
+        color: #fff;
+        font-weight: 600;
+      }
+      .btn-verm:hover {
+        background: var(--verm-dk);
+        border-color: var(--verm-dk);
+        color: #fff;
+        box-shadow: 0 4px 14px var(--verm-glow);
+      }
+      .btn-outline-verm {
+        border-color: var(--verm);
+        color: var(--verm);
+      }
+      .btn-outline-verm:hover {
+        background: var(--verm);
+        color: #fff;
+      }
+      /* table */
+      .table {
+        color: #ddd;
+      }
+      .table > :not(caption) > * > * {
+        background: transparent !important;
+        border-color: var(--border);
+      }
+      .table-hover tbody tr:hover > td {
+        background: rgba(232, 57, 14, 0.06) !important;
+      }
+      .table thead th {
+        color: #999;
+        font-weight: 600;
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid var(--verm) !important;
+      }
+      /* badges status */
+      .bs-em_rota {
+        background: rgba(255, 165, 0, 0.18);
+        color: #ffa500;
+        border: 1px solid #ffa500;
+      }
+      .bs-retornando {
+        background: rgba(13, 110, 253, 0.18);
+        color: #4da6ff;
+        border: 1px solid #4da6ff;
+      }
+      .bs-finalizado {
+        background: rgba(40, 167, 69, 0.18);
+        color: #5cb85c;
+        border: 1px solid #5cb85c;
+      }
+      /* forms */
+      .form-control,
+      .form-select {
+        background: #1e1e1e !important;
+        border-color: #333 !important;
+        color: #e0e0e0 !important;
+      }
+      .form-control:focus,
+      .form-select:focus {
+        border-color: var(--verm) !important;
+        box-shadow: 0 0 0 0.2rem var(--verm-glow) !important;
+      }
+      .form-label {
+        color: #bbb;
+        font-weight: 500;
+        font-size: 0.88rem;
+      }
+      /* alerts */
+      .alert {
+        border: none;
+        border-radius: 8px;
+      }
+      .alert-success {
+        background: rgba(40, 167, 69, 0.12);
+        color: #5cb85c;
+        border-left: 3px solid #28a745;
+      }
+      .alert-warning {
+        background: rgba(255, 165, 0, 0.12);
+        color: #ffa500;
+        border-left: 3px solid #ffa500;
+      }
+      .alert-danger {
+        background: rgba(232, 57, 14, 0.12);
+        color: #e8390e;
+        border-left: 3px solid var(--verm);
+      }
+      .alert-info {
+        background: rgba(13, 110, 253, 0.12);
+        color: #4da6ff;
+        border-left: 3px solid #0d6efd;
+      }
+      /* entrega item */
+      .e-item {
+        background: var(--card2);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 12px 14px;
+        margin-bottom: 6px;
+        transition: 0.15s;
+      }
+      .e-item:hover {
+        border-color: #444;
+      }
+      .e-dinheiro {
+        border-left: 3px solid #28a745;
+      }
+      .e-pix {
+        border-left: 3px solid #2898a7;
+      }
+      .e-cartao {
+        border-left: 3px solid #4da6ff;
+      }
+      .e-online {
+        border-left: 3px solid #9d6fe8;
+      }
+      /* progress bar */
+      .prog-bar-bg {
+        background: #2a2a2a;
+        border-radius: 99px;
+        height: 10px;
+        overflow: hidden;
+      }
+      .prog-bar-fill {
+        height: 100%;
+        border-radius: 99px;
+        transition: 0.3s;
+        background: var(--verm);
+      }
+      .prog-bar-fill.ok {
+        background: #28a745;
+      }
+      /* scrollbar */
+      ::-webkit-scrollbar {
+        width: 5px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #111;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #333;
+        border-radius: 3px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: var(--verm);
+      }
+    </style>
+    {% block extra_css %}
+    {% endblock %}
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-custom sticky-top">
+      <div class="container-fluid">
+        <a class="navbar-brand text-white d-flex align-items-center gap-2" href="{% url 'entregas:dashboard' %}"><span style="color:var(--verm)"><i class="bi bi-fire"></i></span> LANCHONETE</a>
+        <button class="navbar-toggler border-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#nv"><span class="navbar-toggler-icon"></span></button>
+        <div class="collapse navbar-collapse" id="nv">
+          <ul class="navbar-nav me-auto gap-1 ms-3">
+            <li class="nav-item">
+              <a class="nav-link {% block nav_dash %}
+                {% endblock %}"
+                href="{% url 'entregas:dashboard' %}">
+                <i class="bi bi-speedometer2 me-1"></i>Dashboard
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link {% block nav_desp %}
+                {% endblock %}"
+                href="{% url 'entregas:despacho_novo' %}">
+                <i class="bi bi-send me-1"></i>Novo Despacho
+              </a>
+            </li>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle {% block nav_cad %}
+                {% endblock %}"
+                href="#"
+                data-bs-toggle="dropdown">
+                <i class="bi bi-gear me-1"></i>Cadastros
+              </a>
+              <ul class="dropdown-menu dropdown-menu-dark" style="background:#1a1a1a;border-color:#333">
+                <li>
+                  <a class="dropdown-item" href="{% url 'entregas:rota_lista' %}"><i class="bi bi-map me-2"></i>Rotas / Taxas</a>
+                </li>
+                <li>
+                  <a class="dropdown-item" href="{% url 'entregas:motoboy_lista' %}"><i class="bi bi-person-badge me-2"></i>Motoboys</a>
+                </li>
+              </ul>
+            </li>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle {% block nav_caixa %}
+                {% endblock %}"
+                href="#"
+                data-bs-toggle="dropdown">
+                <i class="bi bi-cash-stack me-1"></i>Caixa
+              </a>
+              <ul class="dropdown-menu dropdown-menu-dark" style="background:#1a1a1a;border-color:#333">
+                <li>
+                  <a class="dropdown-item" href="{% url 'caixa:lista' %}"><i class="bi bi-wallet2 me-2"></i>Controle de Caixa</a>
+                </li>
+                <li>
+                  <a class="dropdown-item" href="{% url 'caixa:abrir' %}"><i class="bi bi-plus-circle me-2 text-success"></i>Abrir Caixa</a>
+                </li>
+              </ul>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'entregas:despacho_lista' %}"><i class="bi bi-list-ul me-1"></i>Histórico</a>
+            </li>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown"><i class="bi bi-bar-chart me-1"></i>Relatórios</a>
+              <ul class="dropdown-menu dropdown-menu-dark" style="background:#1a1a1a;border-color:#333">
+                <li>
+                  <a class="dropdown-item" href="{% url 'entregas:relatorio_motoboy' %}"><i class="bi bi-person-badge me-2"></i>Por Motoboy</a>
+                </li>
+              </ul>
+            </li>
+          </ul>
+          <span class="text-muted small"><i class="bi bi-clock me-1"></i><span id="clk"></span></span>
+        </div>
+      </div>
+    </nav>
+
+    {% if messages %}
+      <div class="container-fluid pt-3">
+        {% for msg in messages %}
+          <div class="alert alert-{{ msg.tags }} alert-dismissible fade show">
+            {{ msg }}
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <main>
+      {% block content %}
+      {% endblock %}
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      function tick() {
+        document.getElementById('clk').textContent = new Date().toLocaleTimeString('pt-BR')
+      }
+      tick()
+      setInterval(tick, 1000)
+    </script>
+    {% block extra_js %}
+    {% endblock %}
+  </body>
+</html>

@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block nav_dash %}active{% endblock %}
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 style="color:#fff;font-weight:700;font-size:1.5rem;margin:0"><i class="bi bi-speedometer2 me-2" style="color:var(--verm)"></i>Dashboard</h1>
+            <p class="mb-0" style="color:var(--muted);font-size:.85rem">{{ hoje|date:"d \d\e F \d\e Y" }}</p>
+        </div>
+        <a href="{% url 'entregas:despacho_novo' %}" class="btn btn-verm">
+            <i class="bi bi-send me-1"></i>Novo Despacho
+        </a>
+    </div>
+
+    <!-- Stats -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="stat-card red">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div><div class="stat-val">{{ em_rota.count }}</div><div class="stat-lbl">Em Rota Agora</div></div>
+                    <div class="stat-icon ic-red"><i class="bi bi-bicycle"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div><div class="stat-val">{{ retornando.count }}</div><div class="stat-lbl">Aguardando Lançamento</div></div>
+                    <div class="stat-icon ic-ora"><i class="bi bi-arrow-return-left"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div><div class="stat-val">{{ total_hoje }}</div><div class="stat-lbl">Despachos Hoje</div></div>
+                    <div class="stat-icon ic-blu"><i class="bi bi-send"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div><div class="stat-val">{{ entregas_hoje }}</div><div class="stat-lbl">Entregas Hoje</div></div>
+                    <div class="stat-icon ic-grn"><i class="bi bi-bag-check"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <!-- Em Rota -->
+        <div class="col-12 col-lg-5">
+            <div class="card h-100">
+                <div class="card-header d-flex align-items-center gap-2">
+                    <span class="badge rounded-pill" style="background:#ffa500;color:#000"><i class="bi bi-broadcast me-1"></i>AO VIVO</span>
+                    Em Rota
+                </div>
+                <div class="card-body">
+                    {% for d in em_rota %}
+                    <div class="e-item e-dinheiro d-flex align-items-center gap-3 mb-2">
+                        <div class="stat-icon ic-ora flex-shrink-0"><i class="bi bi-person-fill"></i></div>
+                        <div class="flex-grow-1">
+                            <div class="fw-bold text-white">{{ d.motoboy.nome }}</div>
+                            <div style="color:var(--muted);font-size:.82rem">
+                                Saiu às {{ d.data_saida|date:"H:i" }} com <strong class="text-white">{{ d.qtd_saida }}</strong> entregas
+                            </div>
+                        </div>
+                        <a href="{% url 'entregas:despacho_retorno' d.pk %}"
+                           class="btn btn-sm btn-outline-success"
+                           onclick="return confirm('Registrar retorno de {{ d.motoboy.nome }}?')"
+                           title="Registrar retorno">
+                            <i class="bi bi-arrow-return-left"></i>
+                        </a>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-4" style="color:var(--muted)">
+                        <i class="bi bi-moon fs-2 d-block mb-2"></i>Nenhum motoboy em rota
+                    </div>
+                    {% endfor %}
+
+                    {% if retornando %}
+                    <hr style="border-color:var(--border)">
+                    <div class="small fw-bold mb-2" style="color:#ffa500"><i class="bi bi-hourglass-split me-1"></i>Aguardando lançamento</div>
+                    {% for d in retornando %}
+                    <div class="e-item e-cartao d-flex align-items-center gap-3 mb-2">
+                        <div class="stat-icon ic-blu flex-shrink-0"><i class="bi bi-person-fill"></i></div>
+                        <div class="flex-grow-1">
+                            <div class="fw-bold text-white">{{ d.motoboy.nome }}</div>
+                            <div style="color:var(--muted);font-size:.82rem">
+                                {{ d.qtd_lancada }}/{{ d.qtd_saida }} entregas lançadas
+                            </div>
+                            <div class="prog-bar-bg mt-1">
+                                <div class="prog-bar-fill {% if d.pode_finalizar %}ok{% endif %}"
+                                     style="width:{% widthratio d.qtd_lancada d.qtd_saida 100 %}%"></div>
+                            </div>
+                        </div>
+                        <a href="{% url 'entregas:despacho_lancar' d.pk %}" class="btn btn-sm btn-verm">
+                            <i class="bi bi-pencil-square"></i>
+                        </a>
+                    </div>
+                    {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Histórico -->
+        <div class="col-12 col-lg-7">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-clock-history me-2"></i>Últimos Despachos</span>
+                    <a href="{% url 'entregas:despacho_lista' %}" class="btn btn-sm btn-outline-secondary">Ver todos</a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead><tr><th>Motoboy</th><th>Saída</th><th>Qtd</th><th>Status</th><th></th></tr></thead>
+                            <tbody>
+                                {% for d in ultimos %}
+                                <tr>
+                                    <td class="fw-medium">{{ d.motoboy.nome }}</td>
+                                    <td style="color:var(--muted);font-size:.85rem">{{ d.data_saida|date:"d/m H:i" }}</td>
+                                    <td><span class="badge bg-secondary">{{ d.qtd_saida }}</span></td>
+                                    <td><span class="badge bs-{{ d.status }} rounded-pill px-2">{{ d.get_status_display }}</span></td>
+                                    <td>
+                                        {% if d.status == 'retornando' %}
+                                        <a href="{% url 'entregas:despacho_lancar' d.pk %}" class="btn btn-sm btn-verm">Lançar</a>
+                                        {% elif d.status == 'finalizado' %}
+                                        <a href="{% url 'entregas:despacho_resumo' d.pk %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-eye"></i></a>
+                                        {% else %}
+                                        <a href="{% url 'entregas:despacho_retorno' d.pk %}" class="btn btn-sm btn-outline-success"><i class="bi bi-arrow-return-left"></i></a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="5" class="text-center py-4" style="color:var(--muted)">Nenhum despacho</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

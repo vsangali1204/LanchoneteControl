@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% block title %}Resumo Despacho #{{ despacho.pk }}{% endblock %}
+{% block content %}
+<div class="container py-4" style="max-width:800px">
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <a href="{% url 'entregas:dashboard' %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i></a>
+        <div class="flex-grow-1">
+            <h1 style="color:#fff;font-weight:700;font-size:1.4rem;margin:0">
+                <i class="bi bi-check-circle-fill me-2 text-success"></i>
+                Despacho #{{ despacho.pk }} — Finalizado
+            </h1>
+            <p class="mb-0" style="color:var(--muted);font-size:.83rem">
+                {{ despacho.motoboy.nome }} · {{ despacho.data_saida|date:"d/m/Y H:i" }} → {{ despacho.data_retorno|date:"H:i" }} ({{ despacho.duracao }})
+            </p>
+        </div>
+        <button onclick="window.print()" class="btn btn-outline-secondary btn-sm"><i class="bi bi-printer me-1"></i>Imprimir</button>
+    </div>
+
+    <!-- Totais -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="stat-card text-center">
+                <div class="stat-lbl">Entregas</div>
+                <div class="stat-val">{{ despacho.qtd_saida }}</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card text-center">
+                <div class="stat-lbl">Dinheiro</div>
+                <div class="stat-val text-success" style="font-size:1.4rem">R${{ despacho.total_dinheiro|floatformat:2 }}</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card text-center">
+                <div class="stat-lbl">Total Taxas</div>
+                <div class="stat-val text-warning" style="font-size:1.4rem">R${{ despacho.total_taxa|floatformat:2 }}</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card text-center">
+                <div class="stat-lbl">Duração</div>
+                <div class="stat-val" style="font-size:1.3rem">{{ despacho.duracao }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabela -->
+    <div class="card">
+        <div class="card-header"><i class="bi bi-list-check me-2"></i>Detalhamento</div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table mb-0">
+                    <thead><tr><th>#</th><th>Rota</th><th>Cliente</th><th>Pagamento</th><th>Valor</th><th>Taxa</th></tr></thead>
+                    <tbody>
+                        {% for e in entregas %}
+                        <tr>
+                            <td style="color:var(--muted)">{{ forloop.counter }}</td>
+                            <td class="fw-medium">{{ e.rota.nome }}</td>
+                            <td style="color:var(--muted)">{{ e.cliente|default:"—" }}</td>
+                            <td>
+                                {% if e.forma_pagamento == 'dinheiro' %}
+                                <span class="badge" style="background:rgba(40,167,69,.2);color:#5cb85c"><i class="bi bi-cash me-1"></i>Dinheiro</span>
+                                {% elif e.forma_pagamento == 'cartao' %}
+                                <span class="badge" style="background:rgba(13,110,253,.2);color:#4da6ff"><i class="bi bi-credit-card me-1"></i>Cartão</span>
+                                {% elif e.forma_pagamento == 'pix' %}
+                                <span class="badge" style="background:rgba(13,110,253,.2);color:#2898a7"><i class="bi bi-credit-card me-1"></i>Pix</span>
+                                {% else %}
+                                <span class="badge" style="background:rgba(111,66,193,.2);color:#9d6fe8"><i class="bi bi-phone me-1"></i>Online</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-success">{% if e.valor %}R$ {{ e.valor|floatformat:2 }}{% else %}—{% endif %}</td>
+                            <td class="text-warning">R$ {{ e.rota.taxa_entrega|floatformat:2 }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr class="fw-bold">
+                            <td colspan="4">TOTAL</td>
+                            <td class="text-success">R$ {{ despacho.total_dinheiro|floatformat:2 }}</td>
+                            <td class="text-warning">R$ {{ despacho.total_taxa|floatformat:2 }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% block title %}Relatório Rota #{{ rota.pk }}{% endblock %}
+{% block nav_entregas %}active{% endblock %}
+{% block content %}
+<div class="container py-4" style="max-width:900px">
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <a href="{% url 'entregas:rota_lista' %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i></a>
+        <div class="flex-grow-1">
+            <h1 class="page-title"><i class="bi bi-file-earmark-check me-2" style="color:var(--vermelho)"></i>Relatório — Rota #{{ rota.pk }}</h1>
+            <p class="page-subtitle mb-0">{{ rota.motoboy.nome }} &bull; {{ rota.data_saida|date:"d/m/Y H:i" }} → {{ rota.data_retorno|date:"H:i" }} ({{ rota.duracao }})</p>
+        </div>
+        <button onclick="window.print()" class="btn btn-outline-secondary"><i class="bi bi-printer me-1"></i>Imprimir</button>
+    </div>
+
+    <!-- Resumo financeiro -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="stat-card text-center {% if diferenca < 0 %}danger{% endif %}">
+                <div class="stat-label">Esperado</div>
+                <div class="stat-value text-success">R$ {{ dinheiro_esperado|floatformat:2 }}</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card text-center">
+                <div class="stat-label">Entregue</div>
+                <div class="stat-value">R$ {{ rota.dinheiro_entregue|floatformat:2 }}</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card text-center {% if diferenca != 0 %}danger{% endif %}">
+                <div class="stat-label">Diferença</div>
+                <div class="stat-value {% if diferenca >= 0 %}text-success{% else %}text-danger{% endif %}">
+                    R$ {{ diferenca|floatformat:2 }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if diferenca < 0 %}
+    <div class="alert alert-danger mb-3">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <strong>Atenção!</strong> Faltaram R$ {{ diferenca|floatformat:2|slice:"1:" }} na entrega do dinheiro.
+    </div>
+    {% elif diferenca > 0 %}
+    <div class="alert alert-warning mb-3">
+        <i class="bi bi-info-circle me-2"></i>
+        Sobrou R$ {{ diferenca|floatformat:2 }} — pode ser troco não devolvido.
+    </div>
+    {% else %}
+    <div class="alert alert-success mb-3">
+        <i class="bi bi-check-circle-fill me-2"></i>Caixa conferido! Valores batem perfeitamente.
+    </div>
+    {% endif %}
+
+    <!-- Tabela entregas -->
+    <div class="card">
+        <div class="card-header"><i class="bi bi-list-check me-2"></i>Detalhamento das Entregas</div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table mb-0">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Cliente</th>
+                            <th>Pagamento</th>
+                            <th>Valor</th>
+                            <th>Taxa</th>
+                            <th>Status</th>
+                            <th>Comprovante</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for e in entregas %}
+                        <tr>
+                            <td class="text-muted">{{ forloop.counter }}</td>
+                            <td>{{ e.cliente }}</td>
+                            <td>{{ e.get_forma_pagamento_display }}</td>
+                            <td class="text-success">{% if e.valor_dinheiro %}R$ {{ e.valor_dinheiro|floatformat:2 }}{% else %}—{% endif %}</td>
+                            <td class="text-muted">R$ {{ e.taxa_entrega|floatformat:2 }}</td>
+                            <td>
+                                <span class="badge {% if e.status == 'entregue' %}bg-success{% elif e.status == 'nao_entregue' %}bg-danger{% else %}bg-secondary{% endif %}">
+                                    {{ e.get_status_display }}
+                                </span>
+                            </td>
+                            <td class="text-center">{% if e.comprovante_entregue %}<i class="bi bi-check-circle-fill text-success"></i>{% else %}<i class="bi bi-x-circle text-muted"></i>{% endif %}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr class="fw-bold">
+                            <td colspan="3">TOTAL</td>
+                            <td class="text-success">R$ {{ dinheiro_esperado|floatformat:2 }}</td>
+                            <td class="text-muted">R$ {% with total=0 %}{% for e in entregas %}{% endfor %}{% endwith %}—</td>
+                            <td colspan="2"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

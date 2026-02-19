@@ -1,0 +1,213 @@
+{% extends 'base.html' %}
+{% block title %}Fechar Caixa{% endblock %}
+{% block nav_caixa %}active{% endblock %}
+{% block content %}
+<div class="container py-4" style="max-width:750px">
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <a href="{% url 'caixa:detalhe' caixa.pk %}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <div>
+            <h1 style="color:#fff;font-weight:700;font-size:1.4rem;margin:0">
+                <i class="bi bi-lock me-2" style="color:var(--verm)"></i>Fechamento de Caixa
+            </h1>
+            <p class="mb-0" style="color:var(--muted);font-size:.83rem">
+                Responsável: {{ caixa.responsavel }} · Abertura: R$ {{ caixa.total_abertura|floatformat:2 }}
+            </p>
+        </div>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <!-- Notas -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <i class="bi bi-cash me-2" style="color:var(--verm)"></i><strong>Notas</strong>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0" style="table-layout:fixed">
+                    <thead>
+                        <tr>
+                            <th style="width:42%">Denominação</th>
+                            <th style="width:28%" class="text-center">Quantidade</th>
+                            <th style="width:15%" class="text-center">Unit.</th>
+                            <th style="width:15%" class="text-end pe-3">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cod, label, valor in denominacoes %}
+                        {% if 'nota' in cod %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span style="font-size:1.1rem">💵</span>
+                                    <span class="fw-medium text-white">{{ label }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center justify-content-center gap-1">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary px-2 btn-dec"
+                                            data-target="in_{{ cod }}">−</button>
+                                    <input type="number" name="qtd_{{ cod }}" value="0" min="0"
+                                           class="form-control form-control-sm text-center denom-qtd"
+                                           style="width:64px;background:#1e1e1e;border-color:#333;color:#fff"
+                                           data-valor="{{ valor }}" id="in_{{ cod }}">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary px-2 btn-inc"
+                                            data-target="in_{{ cod }}">+</button>
+                                </div>
+                            </td>
+                            <td class="text-center" style="color:var(--muted);font-size:.85rem">
+                                R$ {{ valor|floatformat:2 }}
+                            </td>
+                            <td class="text-end pe-3 fw-bold" style="color:var(--verm)" id="sub_{{ cod }}">
+                                R$ 0,00
+                            </td>
+                        </tr>
+                        {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Moedas -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <i class="bi bi-coin me-2" style="color:#ffa500"></i><strong>Moedas</strong>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0" style="table-layout:fixed">
+                    <thead>
+                        <tr>
+                            <th style="width:42%">Denominação</th>
+                            <th style="width:28%" class="text-center">Quantidade</th>
+                            <th style="width:15%" class="text-center">Unit.</th>
+                            <th style="width:15%" class="text-end pe-3">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cod, label, valor in denominacoes %}
+                        {% if 'moeda' in cod %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span style="font-size:1.1rem">🪙</span>
+                                    <span class="fw-medium text-white">{{ label }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center justify-content-center gap-1">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary px-2 btn-dec"
+                                            data-target="in_{{ cod }}">−</button>
+                                    <input type="number" name="qtd_{{ cod }}" value="0" min="0"
+                                           class="form-control form-control-sm text-center denom-qtd"
+                                           style="width:64px;background:#1e1e1e;border-color:#333;color:#fff"
+                                           data-valor="{{ valor }}" id="in_{{ cod }}">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary px-2 btn-inc"
+                                            data-target="in_{{ cod }}">+</button>
+                                </div>
+                            </td>
+                            <td class="text-center" style="color:var(--muted);font-size:.85rem">
+                                R$ {{ valor|floatformat:2 }}
+                            </td>
+                            <td class="text-end pe-3 fw-bold" style="color:#ffa500" id="sub_{{ cod }}">
+                                R$ 0,00
+                            </td>
+                        </tr>
+                        {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Totais comparativos -->
+        <div class="row g-3 mb-3">
+            <div class="col-6">
+                <div class="card text-center" style="border-color:#0d6efd">
+                    <div class="card-body py-3">
+                        <div style="color:var(--muted);font-size:.82rem">Abertura</div>
+                        <div class="fw-bold" style="font-size:1.6rem;color:#4da6ff">
+                            R$ {{ caixa.total_abertura|floatformat:2 }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="card text-center" style="border-color:var(--verm)">
+                    <div class="card-body py-3">
+                        <div style="color:var(--muted);font-size:.82rem">Fechamento</div>
+                        <div class="fw-bold" style="font-size:1.6rem;color:var(--verm)" id="totalGeral">
+                            R$ 0,00
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Diferença -->
+        <div class="card mb-4" id="cardDiferenca" style="display:none">
+            <div class="card-body d-flex justify-content-between align-items-center py-3">
+                <span class="fs-5 fw-bold text-white">
+                    <i class="bi bi-arrow-left-right me-2"></i>Diferença
+                </span>
+                <span class="fw-bold" style="font-size:2rem" id="valDiferenca">—</span>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-verm btn-lg w-100 py-3"
+                onclick="return confirm('Confirmar fechamento do caixa?')">
+            <i class="bi bi-lock-fill me-2"></i>Fechar Caixa
+        </button>
+    </form>
+</div>
+
+<script>
+var abertura = parseFloat("{{ caixa.total_abertura }}");
+
+function fmt(v) {
+    return 'R$ ' + v.toFixed(2).replace('.', ',');
+}
+function recalc() {
+    var total = 0;
+    document.querySelectorAll('.denom-qtd').forEach(function(inp) {
+        var qtd = parseInt(inp.value) || 0;
+        var val = parseFloat(inp.dataset.valor) || 0;
+        var sub = qtd * val;
+        total += sub;
+        var cod = inp.id.replace('in_', '');
+        var el = document.getElementById('sub_' + cod);
+        if (el) el.textContent = fmt(sub);
+    });
+    document.getElementById('totalGeral').textContent = fmt(total);
+
+    var diff = total - abertura;
+    var cardDiff = document.getElementById('cardDiferenca');
+    var valDiff = document.getElementById('valDiferenca');
+    cardDiff.style.display = 'flex';
+    cardDiff.style.borderColor = diff >= 0 ? '#28a745' : 'var(--verm)';
+    valDiff.style.color = diff >= 0 ? '#5cb85c' : 'var(--verm)';
+    valDiff.textContent = (diff >= 0 ? '+' : '') + fmt(diff);
+}
+document.querySelectorAll('.denom-qtd').forEach(function(inp) {
+    inp.addEventListener('input', recalc);
+});
+document.querySelectorAll('.btn-inc').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        var inp = document.getElementById(btn.dataset.target);
+        inp.value = (parseInt(inp.value) || 0) + 1;
+        recalc();
+    });
+});
+document.querySelectorAll('.btn-dec').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        var inp = document.getElementById(btn.dataset.target);
+        var v = (parseInt(inp.value) || 0) - 1;
+        inp.value = v < 0 ? 0 : v;
+        recalc();
+    });
+});
+recalc();
+</script>
+{% endblock %}

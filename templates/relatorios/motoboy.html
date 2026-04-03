@@ -22,9 +22,9 @@
         background: #fff;
         color: #000;
         font-family: 'Courier New', Courier, monospace;
-        font-size: 11px;
-        line-height: 1.5;
-        padding: 10px 8px;
+        font-size: 12px;
+        line-height: 1.6;
+        padding: 12px 10px;
         border-radius: 4px;
         box-shadow: 0 4px 20px rgba(0,0,0,0.6);
     }
@@ -34,98 +34,125 @@
 }
 
 @media print {
-    /* Esconde tudo exceto a bobina sendo impressa */
     body * { visibility: hidden !important; }
     .imprimindo, .imprimindo * { visibility: visible !important; }
     .imprimindo {
         position: fixed !important;
         top: 0 !important;
         left: 0 !important;
-        width: 72mm !important;
+        width: 76mm !important;
         margin: 0 !important;
-        padding: 3mm !important;
+        padding: 4mm 3mm !important;
         background: #fff !important;
         color: #000 !important;
         font-family: 'Courier New', Courier, monospace !important;
-        font-size: 9pt !important;
-        line-height: 1.4 !important;
+        font-size: 10.5pt !important;
+        line-height: 1.55 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
         box-shadow: none !important;
         border-radius: 0 !important;
     }
+    /* Garante que tudo preto puro na impressão */
+    .imprimindo .b-titulo,
+    .imprimindo .b-sub,
+    .imprimindo .b-secao-titulo,
+    .imprimindo .b-nome-motoboy,
+    .imprimindo .b-row,
+    .imprimindo .b-row-indent,
+    .imprimindo .b-total,
+    .imprimindo .b-rodape {
+        color: #000 !important;
+    }
+    .imprimindo .b-row-indent {
+        color: #222 !important;
+    }
+    .imprimindo .b-rodape {
+        color: #444 !important;
+    }
+    .imprimindo hr,
+    .imprimindo .b-secao,
+    .imprimindo .b-total {
+        border-color: #000 !important;
+    }
 }
 
-/* Estilos internos da bobina (valem em tela e impressão) */
-.bobina hr-dash {
-    display: block;
-    border: none;
-    border-top: 1px dashed #000;
-    margin: 5px 0;
-}
+/* ── Estrutura da bobina (tela + impressão) ───────────── */
 .b-titulo {
     text-align: center;
     font-weight: bold;
-    font-size: 13px;
-    padding-bottom: 4px;
-    border-bottom: 1px dashed #000;
+    font-size: 14px;
+    letter-spacing: 1px;
+    padding-bottom: 5px;
+    border-bottom: 2px solid #000;
     margin-bottom: 5px;
 }
 .b-sub {
     text-align: center;
-    font-size: 9px;
+    font-size: 10px;
     padding-bottom: 5px;
+    border-bottom: 1px dashed #000;
+    margin-bottom: 7px;
+    color: #222;
+    line-height: 1.5;
+}
+.b-secao {
+    padding-bottom: 6px;
     border-bottom: 1px dashed #000;
     margin-bottom: 6px;
 }
-.b-secao {
-    padding-bottom: 5px;
-    border-bottom: 1px dashed #aaa;
-    margin-bottom: 5px;
-}
 .b-secao-titulo {
     font-weight: bold;
-    font-size: 10px;
-    margin-bottom: 3px;
+    font-size: 11px;
+    margin-bottom: 4px;
     text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #000;
 }
 .b-row {
     display: flex;
     justify-content: space-between;
-    font-size: 10px;
-    margin-bottom: 1px;
+    font-size: 11px;
+    margin-bottom: 2px;
+    color: #000;
 }
 .b-row-indent {
     display: flex;
     justify-content: space-between;
-    font-size: 9px;
-    padding-left: 8px;
-    color: #333;
-    margin-bottom: 1px;
+    font-size: 10px;
+    padding-left: 10px;
+    color: #222;
+    margin-bottom: 2px;
 }
 .b-total {
-    border-top: 1px solid #000;
-    border-bottom: 1px solid #000;
-    padding: 4px 0;
-    margin-top: 5px;
+    border-top: 2px solid #000;
+    border-bottom: 2px solid #000;
+    padding: 5px 0;
+    margin-top: 6px;
 }
 .b-total .b-row {
     font-weight: bold;
-    font-size: 12px;
+    font-size: 13px;
+    color: #000;
 }
 .b-rodape {
     text-align: center;
-    font-size: 8px;
-    color: #666;
-    margin-top: 6px;
+    font-size: 9px;
+    color: #444;
+    margin-top: 7px;
     padding-top: 5px;
     border-top: 1px dashed #000;
 }
 .b-nome-motoboy {
     text-align: center;
     font-weight: bold;
-    font-size: 12px;
-    margin-bottom: 4px;
+    font-size: 13px;
+    margin-bottom: 5px;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 1px;
+    color: #000;
+    border-bottom: 1px solid #000;
+    padding-bottom: 4px;
 }
 </style>
 
@@ -256,11 +283,11 @@
                       onclick="imprimirBobina('bobina_{{ forloop.counter }}')">
                 <i class="bi bi-printer me-1"></i>Imprimir
               </button>
-              <button class="btn btn-sm btn-whatsapp flex-grow-1"
+              {% comment %} <button class="btn btn-sm btn-whatsapp flex-grow-1"
                       style="background:#25d366;color:#fff;border:none"
                       onclick="enviarWhatsapp('{{ r.motoboy.pk }}', this)">
                 <i class="bi bi-whatsapp me-1"></i>WhatsApp
-              </button>
+              </button> {% endcomment %}
             </div>
 
             <!-- Painel de resultado do envio -->

@@ -16,21 +16,30 @@ def caixa_abrir(request):
         return redirect('caixa:lista')
 
     if request.method == 'POST':
-        responsavel = request.POST.get('responsavel', 'Operador')
+        responsavel = request.POST.get('responsavel', 'Operador').strip() or 'Operador'
+        # Modo rápido: sem contagem de cédulas, apenas valor inicial
+        modo = request.POST.get('modo', 'simples')
+
         caixa = Caixa.objects.create(responsavel=responsavel)
 
-        total = 0
-        for cod, label, valor in DENOMINACOES:
-            qtd = int(request.POST.get(f'qtd_{cod}', 0) or 0)
-            if qtd > 0:
-                ContaCaixa.objects.create(
-                    caixa=caixa, tipo='abertura', denominacao=cod, quantidade=qtd
-                )
-                total += qtd * valor
+        if modo == 'detalhado':
+            total = 0
+            for cod, label, valor in DENOMINACOES:
+                qtd = int(request.POST.get(f'qtd_{cod}', 0) or 0)
+                if qtd > 0:
+                    ContaCaixa.objects.create(caixa=caixa, tipo='abertura', denominacao=cod, quantidade=qtd)
+                    total += qtd * valor
+            caixa.total_abertura = total
+        else:
+            # Modo simples: valor informado diretamente
+            try:
+                total = float(request.POST.get('valor_inicial', 0) or 0)
+            except ValueError:
+                total = 0
+            caixa.total_abertura = total
 
-        caixa.total_abertura = total
         caixa.save()
-        messages.success(request, f'Caixa aberto com R$ {total:.2f}!')
+        messages.success(request, f'Caixa aberto com R$ {float(caixa.total_abertura):.2f}!')
         return redirect('caixa:detalhe', pk=caixa.pk)
 
     return render(request, 'caixa/abertura.html', {'denominacoes': DENOMINACOES})
@@ -40,7 +49,6 @@ def caixa_detalhe(request, pk):
     caixa = get_object_or_404(Caixa, pk=pk)
     contas_abertura = caixa.contas.filter(tipo='abertura')
     contas_fechamento = caixa.contas.filter(tipo='fechamento')
-
     context = {
         'caixa': caixa,
         'contas_abertura': contas_abertura,
@@ -57,26 +65,21 @@ def caixa_fechar(request, pk):
         return redirect('caixa:detalhe', pk=pk)
 
     if request.method == 'POST':
-        total = 0
-        for cod, label, valor in DENOMINACOES:
-            qtd = int(request.POST.get(f'qtd_{cod}', 0) or 0)
-            ContaCaixa.objects.filter(caixa=caixa, tipo='fechamento').delete()
-            if qtd > 0:
-                ContaCaixa.objects.create(
-                    caixa=caixa, tipo='fechamento', denominacao=cod, quantidade=qtd
-                )
-                total += qtd * valor
-
-        # Recalcular (pode ter duplicata no loop acima, vamos refazer)
+        modo = request.POST.get('modo', 'simples')
         ContaCaixa.objects.filter(caixa=caixa, tipo='fechamento').delete()
-        total = 0
-        for cod, label, valor in DENOMINACOES:
-            qtd = int(request.POST.get(f'qtd_{cod}', 0) or 0)
-            if qtd > 0:
-                ContaCaixa.objects.create(
-                    caixa=caixa, tipo='fechamento', denominacao=cod, quantidade=qtd
-                )
-                total += qtd * valor
+
+        if modo == 'detalhado':
+            total = 0
+            for cod, label, valor in DENOMINACOES:
+                qtd = int(request.POST.get(f'qtd_{cod}', 0) or 0)
+                if qtd > 0:
+                    ContaCaixa.objects.create(caixa=caixa, tipo='fechamento', denominacao=cod, quantidade=qtd)
+                    total += qtd * valor
+        else:
+            try:
+                total = float(request.POST.get('valor_final', 0) or 0)
+            except ValueError:
+                total = 0
 
         caixa.total_fechamento = total
         caixa.data_fechamento = timezone.now()
@@ -85,7 +88,6 @@ def caixa_fechar(request, pk):
         messages.success(request, f'Caixa fechado com R$ {total:.2f}!')
         return redirect('caixa:relatorio', pk=caixa.pk)
 
-    # Preencher com valores de abertura como sugestão
     abertura_qtd = {c.denominacao: c.quantidade for c in caixa.contas.filter(tipo='abertura')}
     return render(request, 'caixa/fechamento.html', {
         'caixa': caixa,
@@ -98,11 +100,8 @@ def caixa_relatorio(request, pk):
     caixa = get_object_or_404(Caixa, pk=pk)
     contas_abertura = list(caixa.contas.filter(tipo='abertura'))
     contas_fechamento = list(caixa.contas.filter(tipo='fechamento'))
-
-    # Merge para comparação
     abertura_map = {c.denominacao: c for c in contas_abertura}
     fechamento_map = {c.denominacao: c for c in contas_fechamento}
-
     comparacao = []
     for cod, label, valor in DENOMINACOES:
         a = abertura_map.get(cod)
@@ -111,20 +110,12 @@ def caixa_relatorio(request, pk):
             qtd_a = a.quantidade if a else 0
             qtd_f = f.quantidade if f else 0
             comparacao.append({
-                'label': label,
-                'valor': valor,
-                'qtd_abertura': qtd_a,
-                'qtd_fechamento': qtd_f,
-                'sub_abertura': qtd_a * valor,
-                'sub_fechamento': qtd_f * valor,
+                'label': label, 'valor': valor,
+                'qtd_abertura': qtd_a, 'qtd_fechamento': qtd_f,
+                'sub_abertura': qtd_a * valor, 'sub_fechamento': qtd_f * valor,
                 'diferenca': (qtd_f - qtd_a) * valor,
             })
-
     diferenca = (caixa.total_fechamento or 0) - caixa.total_abertura
-
-    context = {
-        'caixa': caixa,
-        'comparacao': comparacao,
-        'diferenca': diferenca,
-    }
-    return render(request, 'caixa/relatorio.html', context)
+    return render(request, 'caixa/relatorio.html', {
+        'caixa': caixa, 'comparacao': comparacao, 'diferenca': diferenca,
+    })

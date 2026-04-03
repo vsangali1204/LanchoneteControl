@@ -1,228 +1,273 @@
 {% extends 'base.html' %}
-{% block title %}
-  Lançar Retorno — {{ despacho.motoboy.nome }}
-{% endblock %}
+{% load entregas_extras %}
+{% block title %}Lançar Retorno — {{ despacho.motoboy.nome }}{% endblock %}
 {% block content %}
-  <div class="container-fluid py-4">
-    <div class="d-flex align-items-start gap-3 mb-4">
-      <a href="{% url 'entregas:dashboard' %}" class="btn btn-sm btn-outline-secondary mt-1"><i class="bi bi-arrow-left"></i></a>
-      <div class="flex-grow-1">
-        <h1 style="color:#fff;font-weight:700;font-size:1.4rem;margin:0">
-          <i class="bi bi-clipboard-check me-2" style="color:var(--verm)"></i>
-          Lançamento de Retorno — {{ despacho.motoboy.nome }}
-        </h1>
-        <p class="mb-0" style="color:var(--muted);font-size:.83rem">
-          Saiu às {{ despacho.data_saida|date:'H:i' }}
-          {% if despacho.data_retorno %}
-            · Retornou às {{ despacho.data_retorno|date:'H:i' }}
-          {% endif %}
-        </p>
-      </div>
+<div class="container-fluid py-3">
+
+  <!-- Cabeçalho compacto -->
+  <div class="d-flex align-items-center gap-2 mb-3">
+    <a href="{% url 'entregas:dashboard' %}" class="btn btn-sm btn-outline-secondary">
+      <i class="bi bi-arrow-left"></i>
+    </a>
+    <div class="flex-grow-1">
+      <h1 style="color:#fff;font-weight:700;font-size:1.2rem;margin:0">
+        <i class="bi bi-clipboard-check me-1" style="color:var(--verm)"></i>
+        {{ despacho.motoboy.nome }} — Retorno
+      </h1>
+      <span style="color:var(--muted);font-size:.8rem">
+        Saiu {{ despacho.data_saida|date:'H:i' }}
+        {% if despacho.data_retorno %}· Retornou {{ despacho.data_retorno|date:'H:i' }}{% endif %}
+      </span>
     </div>
-
-    <!-- Barra de progresso -->
-    <div class="card mb-4"
-      style="border-color:{% if despacho.pode_finalizar %}
-        
-        #28a745
-
-      {% else %}
-        
-        var(--verm)
-
-      {% endif %}">
-      <div class="card-body">
-        <div class="d-flex justify-content-between align-items-center mb-2">
-          <span class="fw-bold text-white">Progresso das Entregas</span>
-          <span class="fs-5 fw-bold {% if despacho.pode_finalizar %}
-              
-              text-success
-
-            {% else %}
-              
-              text-warning
-
-            {% endif %}">
-            {{ despacho.qtd_lancada }} / {{ despacho.qtd_saida }}
-          </span>
-        </div>
-        <div class="prog-bar-bg" style="height:14px">
-          {% if despacho.qtd_saida %}
-            <div class="prog-bar-fill {% if despacho.pode_finalizar %}ok{% endif %}" style="width:{% widthratio despacho.qtd_lancada despacho.qtd_saida 100 %}%"></div>
-          {% endif %}
-        </div>
-        <div class="mt-2" style="font-size:.83rem">
-          {% if despacho.pode_finalizar %}
-            <span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>Todas lançadas! Você pode finalizar.</span>
-          {% else %}
-            <span style="color:#ffa500"><i class="bi bi-exclamation-triangle me-1"></i>Faltam {{ despacho.faltam }} entrega(s).</span>
-          {% endif %}
-        </div>
-      </div>
-    </div>
-
-    <div class="row g-3">
-      <!-- Formulário — agora à ESQUERDA, mais estreito -->
-      <div class="col-12 col-lg-6 order-lg-1">
-        {% if not despacho.pode_finalizar %}
-          <div class="card sticky-top" style="top:80px">
-            <div class="card-header">
-              <i class="bi bi-plus-circle me-2" style="color:var(--verm)"></i>
-              Lançar Entrega
-              <span class="float-end badge bg-secondary">{{ despacho.qtd_lancada }}/{{ despacho.qtd_saida }}</span>
-            </div>
-            <div class="card-body p-3">
-              <form method="post" id="formEntrega">
-                {% csrf_token %}
-                <div class="mb-2">
-                  <label class="form-label">Rota *</label>
-                  {{ form.rota }}
-                  <div class="mt-1" style="font-size:.8rem;color:var(--muted)">
-                    Taxa: <strong id="taxa_display" style="color:var(--verm)">—</strong>
-                  </div>
-                </div>
-                <div class="mb-2">
-                  <label class="form-label">Forma de Pagamento *</label>
-                  {{ form.forma_pagamento }}
-                </div>
-                <div class="mb-2">
-                  <label class="form-label">Valor Pago pelo Cliente (R$) *</label>
-                  {{ form.valor }}
-                </div>
-                <div class="mb-3">
-                  <label class="form-label">Observação</label>
-                  {{ form.observacoes }}
-                </div>
-                <button type="submit" name="add_entrega" class="btn btn-verm w-100 py-2"><i class="bi bi-plus-lg me-1"></i>Lançar Entrega</button>
-              </form>
-            </div>
-          </div>
-        {% else %}
-          <div class="card sticky-top" style="top:80px;border-color:#28a745">
-            <div class="card-body text-center py-5">
-              <i class="bi bi-check-circle-fill text-success" style="font-size:3.5rem"></i>
-              <p class="fw-bold text-white mt-3 mb-1 fs-5">Todas lançadas!</p>
-              <p style="color:var(--muted);font-size:.85rem">{{ despacho.qtd_lancada }} de {{ despacho.qtd_saida }} confirmadas.</p>
-              <p style="color:var(--muted);font-size:.85rem" class="mb-0">
-                Clique em <strong class="text-success">Finalizar</strong> para concluir.
-              </p>
-            </div>
-          </div>
-        {% endif %}
-      </div>
-
-      <div class="col-12 col-lg-6 order-lg-2">
-        <div class="card">
-          <div class="card-header d-flex justify-content-between align-items-center">
-            <span><i class="bi bi-list-check me-2"></i>Entregas Lançadas</span>
-            <span class="badge {% if despacho.pode_finalizar %}
-                
-                bg-success
-
-              {% else %}
-                
-                bg-secondary
-
-              {% endif %}">
-              {{ despacho.qtd_lancada }}/{{ despacho.qtd_saida }}
-            </span>
-          </div>
-          <div class="card-body">
-            {% for e in entregas %}
-              <div class="e-item e-{{ e.forma_pagamento }} d-flex align-items-center gap-3">
-                <div class="fw-bold text-white" style="min-width:24px;text-align:center">{{ forloop.counter }}</div>
-                <div class="flex-grow-1">
-                  <div class="fw-medium text-white">{{ e.rota.nome }}</div>
-                  <div style="font-size:.82rem;color:var(--muted)">
-                    {% if e.forma_pagamento == 'dinheiro' %}
-                      <span style="color:#5cb85c"><i class="bi bi-cash me-1"></i>Dinheiro</span>
-                    {% elif e.forma_pagamento == 'cartao' %}
-                      <span style="color:#4da6ff"><i class="bi bi-credit-card me-1"></i>Cartão</span>
-                    {% elif e.forma_pagamento == 'pix' %}
-                      <span style="color:#2898a7"><i class="bi bi-pix me-1"></i>Pix</span>
-                    {% else %}
-                      <span style="color:#9d6fe8"><i class="bi bi-phone me-1"></i>Online</span>
-                    {% endif %}
-                    <span class="ms-2 fw-bold text-white">R$ {{ e.valor|floatformat:2 }}</span>
-                    <span class="ms-2" style="color:#555">Taxa: R$ {{ e.rota.taxa_entrega|floatformat:2 }}</span>
-                  </div>
-                </div>
-                <form method="post" class="flex-shrink-0">
-                  {% csrf_token %}
-                  <input type="hidden" name="entrega_id" value="{{ e.pk }}" />
-                  <button type="submit" name="remover_entrega" class="btn btn-sm btn-outline-danger" onclick="return confirm('Remover esta entrega?')"><i class="bi bi-trash3"></i></button>
-                </form>
-              </div>
-            {% empty %}
-              <div class="text-center py-4" style="color:var(--muted)">
-                <i class="bi bi-inbox fs-2 d-block mb-2"></i>Nenhuma entrega lançada ainda
-              </div>
-            {% endfor %}
-          </div>
-        </div>
-
-        {% if entregas %}
-          <div class="card mt-3">
-            <div class="card-body">
-              <div class="row g-2 text-center">
-                <div class="col-4">
-                  <div style="color:var(--muted);font-size:.8rem">Total Recebido</div>
-                  <div class="fw-bold text-success">R$ {{ despacho.total_dinheiro|floatformat:2 }}</div>
-                </div>
-                <div class="col-4">
-                  <div style="color:var(--muted);font-size:.8rem">Total Taxas</div>
-                  <div class="fw-bold text-warning">R$ {{ despacho.total_taxa|floatformat:2 }}</div>
-                </div>
-                <div class="col-4">
-                  <div style="color:var(--muted);font-size:.8rem">Progresso</div>
-                  <div class="fw-bold {% if despacho.pode_finalizar %}
-                      
-                      text-success
-
-                    {% else %}
-                      
-                      text-white
-
-                    {% endif %}">{{ despacho.qtd_lancada }}/{{ despacho.qtd_saida }}</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        {% endif %}
-
-        <form method="post" class="mt-3">
-          {% csrf_token %}
-          {% if despacho.pode_finalizar %}
-            <button type="submit" name="finalizar" class="btn btn-success btn-lg w-100 py-3 fw-bold" onclick="return confirm('Finalizar despacho? Esta ação não pode ser desfeita.')">
-              <i class="bi bi-check-circle-fill me-2 fs-5"></i>
-              Finalizar Despacho ({{ despacho.qtd_lancada }}/{{ despacho.qtd_saida }} ✓)
-            </button>
-          {% else %}
-            <button type="button" class="btn btn-outline-secondary btn-lg w-100 py-3 fw-bold" disabled>
-              <i class="bi bi-lock me-2"></i>
-              Finalizar — Faltam {{ despacho.faltam }} entrega(s)
-            </button>
-            <p class="text-center mt-2 mb-0" style="color:var(--muted);font-size:.82rem">Lance todas as {{ despacho.qtd_saida }} entregas para habilitar o botão</p>
-          {% endif %}
-        </form>
+    <a href="{% url 'entregas:despacho_editar' despacho.pk %}" class="btn btn-sm btn-outline-warning" title="Editar despacho">
+      <i class="bi bi-pencil"></i>
+    </a>
+    <!-- Progresso inline -->
+    <div class="text-end">
+      <span class="fw-bold {% if despacho.pode_finalizar %}text-success{% else %}text-warning{% endif %}" style="font-size:1.4rem">
+        {{ despacho.qtd_lancada }}/{{ despacho.qtd_saida }}
+      </span>
+      <div style="font-size:.75rem;color:var(--muted)">
+        {% if despacho.pode_finalizar %}✓ tudo lançado{% else %}faltam {{ despacho.faltam }}{% endif %}
       </div>
     </div>
   </div>
 
-  <script>
-var rotasInfo = {{rotas_info|safe}};
-var selRota = document.getElementById('id_rota_entrega');
+  <!-- Barra de progresso slim -->
+  <div class="prog-bar-bg mb-3" style="height:8px;border-radius:4px">
+    {% if despacho.qtd_saida %}
+      <div class="prog-bar-fill {% if despacho.pode_finalizar %}ok{% endif %}"
+           style="width:{% widthratio despacho.qtd_lancada despacho.qtd_saida 100 %}%;height:8px;border-radius:4px;transition:width .3s"></div>
+    {% endif %}
+  </div>
+
+  <div class="row g-3">
+
+    <!-- Coluna esquerda: form de lançamento -->
+    <div class="col-12 col-lg-5">
+      <div class="sticky-top" style="top:70px">
+
+        {% if pode_adicionar %}
+        <div class="card">
+          <div class="card-header py-2">
+            <i class="bi bi-plus-circle me-1" style="color:var(--verm)"></i>
+            Lançar Entrega
+            <span class="float-end badge bg-secondary">{{ despacho.qtd_lancada }}/{{ despacho.qtd_saida }}</span>
+          </div>
+          <div class="card-body p-3">
+            <form method="post" id="formEntrega" autocomplete="off">
+              {% csrf_token %}
+
+              <!-- Rota + taxa em linha -->
+              <div class="mb-2">
+                <label class="form-label mb-1" style="font-size:.85rem">Rota</label>
+                {{ form.rota }}
+                <div style="font-size:.78rem;color:var(--muted);margin-top:2px">
+                  Taxa: <strong id="taxa_display" style="color:var(--verm)">—</strong>
+                </div>
+              </div>
+
+              <!-- Forma de pagamento -->
+              <div class="mb-2">
+                <label class="form-label mb-1" style="font-size:.85rem">Pagamento</label>
+                {{ form.forma_pagamento }}
+              </div>
+
+              <!-- Valor + botões rápidos -->
+              <div class="mb-2">
+                <label class="form-label mb-1" style="font-size:.85rem">Valor (R$)</label>
+                {{ form.valor }}
+                <!-- Atalhos de valores -->
+                <div class="d-flex gap-1 flex-wrap mt-1" id="atalhoValores">
+                  {% for v in "20,30,40,50,60,80,100"|split:"," %}
+                  <button type="button" class="btn btn-sm btn-outline-secondary px-2 py-0"
+                          style="font-size:.78rem" onclick="setValor({{ v }})">{{ v }}</button>
+                  {% endfor %}
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label mb-1" style="font-size:.85rem">Obs.</label>
+                {{ form.observacoes }}
+              </div>
+
+              <button type="submit" name="add_entrega" class="btn btn-verm w-100 fw-bold">
+                <i class="bi bi-plus-lg me-1"></i>Lançar
+              </button>
+            </form>
+          </div>
+        </div>
+        {% else %}
+        <div class="card" style="border-color:#28a745">
+          <div class="card-body text-center py-4">
+            <i class="bi bi-check-circle-fill text-success" style="font-size:3rem"></i>
+            <p class="fw-bold text-white mt-2 mb-1">Todas lançadas!</p>
+            <p style="color:var(--muted);font-size:.84rem">{{ despacho.qtd_lancada }} de {{ despacho.qtd_saida }} confirmadas.</p>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Totais por forma de pagamento -->
+        {% if totais_pgto %}
+        <div class="card mt-2">
+          <div class="card-body py-2 px-3">
+            {% for label, total in totais_pgto.items %}
+            <div class="d-flex justify-content-between" style="font-size:.84rem;padding:3px 0">
+              <span style="color:var(--muted)">{{ label }}</span>
+              <span class="fw-bold text-white">R$ {{ total|floatformat:2 }}</span>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Botão finalizar -->
+        <form method="post" class="mt-2">
+          {% csrf_token %}
+          {% if despacho.pode_finalizar %}
+            <button type="submit" name="finalizar" class="btn btn-success btn-lg w-100 fw-bold"
+                    onclick="return confirm('Finalizar despacho?')">
+              <i class="bi bi-check-circle-fill me-1"></i>Finalizar Despacho
+            </button>
+          {% else %}
+            <button type="button" class="btn btn-outline-secondary w-100 fw-bold" disabled>
+              <i class="bi bi-lock me-1"></i>Faltam {{ despacho.faltam }} entrega(s)
+            </button>
+          {% endif %}
+        </form>
+
+      </div>
+    </div>
+
+    <!-- Coluna direita: lista de entregas lançadas -->
+    <div class="col-12 col-lg-7">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center py-2">
+          <span><i class="bi bi-list-check me-1"></i>Entregas Lançadas</span>
+          <span class="badge {% if despacho.pode_finalizar %}bg-success{% else %}bg-secondary{% endif %}">
+            {{ despacho.qtd_lancada }}/{{ despacho.qtd_saida }}
+          </span>
+        </div>
+        <div class="card-body p-0">
+          {% for e in entregas %}
+          <div class="e-item e-{{ e.forma_pagamento }} d-flex align-items-center gap-2 px-3 py-2"
+               style="border-bottom:1px solid #1a1a1a">
+            <div class="fw-bold text-white" style="min-width:22px;text-align:center;font-size:.9rem">
+              {{ forloop.counter }}
+            </div>
+            <div class="flex-grow-1">
+              <div class="fw-medium text-white" style="font-size:.9rem">{{ e.rota.nome }}</div>
+              <div style="font-size:.78rem;color:var(--muted)">
+                {% if e.forma_pagamento == 'dinheiro' %}
+                  <span style="color:#5cb85c"><i class="bi bi-cash me-1"></i>Dinheiro</span>
+                {% elif e.forma_pagamento == 'cartao' %}
+                  <span style="color:#4da6ff"><i class="bi bi-credit-card me-1"></i>Cartão</span>
+                {% elif e.forma_pagamento == 'pix' %}
+                  <span style="color:#2898a7"><i class="bi bi-pix me-1"></i>Pix</span>
+                {% else %}
+                  <span style="color:#9d6fe8"><i class="bi bi-phone me-1"></i>Online</span>
+                {% endif %}
+                <span class="ms-1 fw-bold text-white">R$ {{ e.valor|floatformat:2 }}</span>
+                <span class="ms-1" style="color:#555">· taxa R$ {{ e.rota.taxa_entrega|floatformat:2 }}</span>
+                {% if e.observacoes %}<span class="ms-1" style="color:#666">· {{ e.observacoes }}</span>{% endif %}
+              </div>
+            </div>
+            <div class="d-flex gap-1 flex-shrink-0">
+              <a href="{% url 'entregas:entrega_editar' e.pk %}" class="btn btn-sm btn-outline-warning py-0 px-2">
+                <i class="bi bi-pencil" style="font-size:.8rem"></i>
+              </a>
+              <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="entrega_id" value="{{ e.pk }}">
+                <button type="submit" name="remover_entrega" class="btn btn-sm btn-outline-danger py-0 px-2"
+                        onclick="return confirm('Remover?')">
+                  <i class="bi bi-trash3" style="font-size:.8rem"></i>
+                </button>
+              </form>
+            </div>
+          </div>
+          {% empty %}
+          <div class="text-center py-5" style="color:var(--muted)">
+            <i class="bi bi-inbox fs-2 d-block mb-2"></i>Nenhuma entrega lançada
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+var rotasInfo  = {{ rotas_info|safe }};
+var DESP_ID    = '{{ despacho.pk }}';
+var STORAGE_KEY = 'despacho_lancar_' + DESP_ID;
+
+var selRota   = document.getElementById('id_rota_entrega');
+var selPgto   = document.getElementById('id_forma_pgto');
+var inpValor  = document.querySelector('[name="valor"]');
+var inpObs    = document.querySelector('[name="observacoes"]');
 var taxaDisplay = document.getElementById('taxa_display');
 
-function atualizarTaxa() {
-    if (!selRota || !taxaDisplay) return;
-    var rid = selRota.value;
-    taxaDisplay.textContent = (rid && rotasInfo[rid])
-        ? 'R$ ' + parseFloat(rotasInfo[rid]).toFixed(2).replace('.', ',')
-        : '—';
+// ── Persistência: salva seleções no sessionStorage ──────────────────────────
+function salvarEstado() {
+  var estado = {
+    rota:  selRota  ? selRota.value  : '',
+    pgto:  selPgto  ? selPgto.value  : '',
+    valor: inpValor ? inpValor.value : '',
+    obs:   inpObs   ? inpObs.value   : '',
+  };
+  try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(estado)); } catch(e) {}
 }
 
-if (selRota) selRota.addEventListener('change', atualizarTaxa);
+function restaurarEstado() {
+  try {
+    var raw = sessionStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    var estado = JSON.parse(raw);
+    if (selRota  && estado.rota)  { selRota.value  = estado.rota; }
+    if (selPgto  && estado.pgto)  { selPgto.value  = estado.pgto; }
+    // valor e obs NÃO são restaurados — só rota e forma de pagamento
+  } catch(e) {}
+}
+
+// ── Taxa display ─────────────────────────────────────────────────────────────
+function atualizarTaxa() {
+  if (!selRota || !taxaDisplay) return;
+  var rid = selRota.value;
+  taxaDisplay.textContent = (rid && rotasInfo[rid])
+    ? 'R$ ' + parseFloat(rotasInfo[rid]).toFixed(2).replace('.', ',')
+    : '—';
+}
+
+if (selRota) selRota.addEventListener('change', function() {
+  atualizarTaxa();
+  salvarEstado();
+});
+
+if (selPgto) selPgto.addEventListener('change', function() {
+  salvarEstado();
+  if (inpValor) { inpValor.value = ''; inpValor.focus(); }
+});
+
+// ── Atalhos de valor ─────────────────────────────────────────────────────────
+function setValor(v) {
+  if (inpValor) { inpValor.value = v; inpValor.focus(); }
+}
+
+// ── Ao submeter, salva estado (rota + pgto permanecem para próximo) ───────────
+var formEntrega = document.getElementById('formEntrega');
+if (formEntrega) {
+  formEntrega.addEventListener('submit', function() {
+    salvarEstado();
+    // Limpa valor e obs mas mantém rota e pgto visualmente
+    // (o Django vai re-renderizar o form limpo, a restauração reaplica rota/pgto)
+  });
+}
+
+// ── Inicialização ─────────────────────────────────────────────────────────────
+restaurarEstado();
 atualizarTaxa();
+if (inpValor) { inpValor.focus(); inpValor.select(); }
 </script>
 {% endblock %}

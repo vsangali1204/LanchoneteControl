@@ -250,11 +250,22 @@
             </div>
             <!-- fim bobina -->
 
-            <!-- Botão imprimir individual -->
-            <button class="btn btn-sm btn-outline-secondary btn-imprimir-individual"
-                    onclick="imprimirBobina('bobina_{{ forloop.counter }}')">
-                <i class="bi bi-printer me-1"></i>Imprimir — {{ r.motoboy.nome }}
-            </button>
+            <!-- Botões: imprimir + WhatsApp -->
+            <div class="d-flex gap-2 btn-imprimir-individual" style="width:302px">
+              <button class="btn btn-sm btn-outline-secondary flex-grow-1"
+                      onclick="imprimirBobina('bobina_{{ forloop.counter }}')">
+                <i class="bi bi-printer me-1"></i>Imprimir
+              </button>
+              <button class="btn btn-sm btn-whatsapp flex-grow-1"
+                      style="background:#25d366;color:#fff;border:none"
+                      onclick="enviarWhatsapp('{{ r.motoboy.pk }}', this)">
+                <i class="bi bi-whatsapp me-1"></i>WhatsApp
+              </button>
+            </div>
+
+            <!-- Painel de resultado do envio -->
+            <div class="resultado-envio" id="res_{{ r.motoboy.pk }}"
+                 style="display:none;width:302px;font-size:.8rem;margin-top:4px"></div>
 
         </div>
         {% endfor %}
@@ -273,21 +284,72 @@
 
 <script>
 function imprimirBobina(id) {
-    // Remove classe de impressão anterior se existir
     document.querySelectorAll('.imprimindo').forEach(function(el) {
         el.classList.remove('imprimindo');
     });
-
-    // Marca a bobina alvo
     document.getElementById(id).classList.add('imprimindo');
-
-    // Imprime
     window.print();
-
-    // Remove a classe após impressão
     setTimeout(function() {
         document.getElementById(id).classList.remove('imprimindo');
     }, 1000);
+}
+
+function getCookie(name) {
+    var v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
+    return v ? v[2] : null;
+}
+
+function enviarWhatsapp(motoboyId, btn) {
+    var dataInicio = document.querySelector('[name="data_inicio"]').value;
+    var dataFim    = document.querySelector('[name="data_fim"]').value;
+    var resEl = document.getElementById('res_' + motoboyId);
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Enviando…';
+    resEl.style.display = 'none';
+
+    var formData = new FormData();
+    formData.append('motoboy_id', motoboyId);
+    formData.append('data_inicio', dataInicio);
+    formData.append('data_fim', dataFim);
+    formData.append('csrfmiddlewaretoken', getCookie('csrftoken'));
+
+    fetch('{% url "mensagens:enviar_motoboy" %}', {
+        method: 'POST',
+        body: formData,
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-whatsapp me-1"></i>WhatsApp';
+
+        var cor = data.ok ? '#1a4d1a' : '#4d1a1a';
+        var borda = data.ok ? '#25d366' : '#e8390e';
+        var icone = data.ok ? '✅' : '❌';
+
+        var html = '<div style="background:' + cor + ';border:1px solid ' + borda + ';border-radius:6px;padding:8px 10px">';
+        html += '<div style="font-weight:bold;margin-bottom:4px">' + icone + ' ' + (data.ok ? 'Enviado!' : 'Erro') + '</div>';
+
+        if (data.erro) {
+            html += '<div style="color:#e07070">' + data.erro + '</div>';
+        } else {
+            html += '<div style="color:#aaa">Enviado para ' + data.enviados + '/' + data.total + ' contato(s)</div>';
+            (data.resultados || []).forEach(function(r) {
+                var status = r.ok ? '✓' : '✗';
+                var cor2   = r.ok ? '#5cb85c' : '#e07070';
+                html += '<div style="color:' + cor2 + ';margin-top:2px">' + status + ' ' + r.contato + ' (' + r.numero + ')</div>';
+            });
+        }
+        html += '</div>';
+        resEl.innerHTML = html;
+        resEl.style.display = 'block';
+    })
+    .catch(function(err) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-whatsapp me-1"></i>WhatsApp';
+        resEl.innerHTML = '<div style="color:#e07070;background:#1f1010;border:1px solid #4d1a1a;border-radius:6px;padding:8px">Erro de comunicação: ' + err + '</div>';
+        resEl.style.display = 'block';
+    });
 }
 </script>
 

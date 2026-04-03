@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}Editar Retirada #{{ retirada.pk }}{% endblock %}
+{% block content %}
+<div class="container py-4" style="max-width:560px">
+  <div class="d-flex align-items-center gap-3 mb-4">
+    <a href="{% url 'entregas:retirada_nova' %}" class="btn btn-sm btn-outline-secondary">
+      <i class="bi bi-arrow-left"></i>
+    </a>
+    <div>
+      <h1 style="color:#fff;font-weight:700;font-size:1.4rem;margin:0">
+        <i class="bi bi-pencil me-2" style="color:var(--verm)"></i>Editar Retirada #{{ retirada.pk }}
+      </h1>
+      <p class="mb-0" style="color:var(--muted);font-size:.83rem">{{ retirada.data|date:'d/m H:i' }}</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body p-4">
+      <form method="post">
+        {% csrf_token %}
+        {% for field in form %}
+        <div class="mb-3">
+          <label class="form-label fw-bold">{{ field.label }}</label>
+          {{ field }}
+          {% if field.errors %}<div class="text-danger mt-1" style="font-size:.83rem">{{ field.errors|join:", " }}</div>{% endif %}
+        </div>
+        {% endfor %}
+        <div class="d-flex gap-2 mt-4">
+          <button type="submit" class="btn btn-verm flex-grow-1 py-2 fw-bold">
+            <i class="bi bi-check-lg me-1"></i>Salvar Alterações
+          </button>
+          <a href="{% url 'entregas:retirada_nova' %}" class="btn btn-outline-secondary py-2">Cancelar</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

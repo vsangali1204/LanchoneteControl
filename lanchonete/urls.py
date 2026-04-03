@@ -7,4 +7,5 @@ urlpatterns = [
     path('', lambda request: redirect('entregas:dashboard'), name='home'),
     path('entregas/', include('entregas.urls', namespace='entregas')),
     path('caixa/', include('caixa.urls', namespace='caixa')),
+    path('mensagens/', include('mensagens.urls', namespace='mensagens')),
 ]

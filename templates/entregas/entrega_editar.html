@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block title %}Editar Entrega #{{ entrega.pk }}{% endblock %}
+{% block content %}
+<div class="container py-4" style="max-width:560px">
+  <div class="d-flex align-items-center gap-3 mb-4">
+    <a href="{% url 'entregas:despacho_lancar' despacho.pk %}" class="btn btn-sm btn-outline-secondary">
+      <i class="bi bi-arrow-left"></i>
+    </a>
+    <div>
+      <h1 style="color:#fff;font-weight:700;font-size:1.4rem;margin:0">
+        <i class="bi bi-pencil me-2" style="color:var(--verm)"></i>Editar Entrega #{{ entrega.pk }}
+      </h1>
+      <p class="mb-0" style="color:var(--muted);font-size:.83rem">Despacho #{{ despacho.pk }} · {{ despacho.motoboy.nome }}</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body p-4">
+      <form method="post">
+        {% csrf_token %}
+        {% for field in form %}
+        <div class="mb-3">
+          <label class="form-label fw-bold">{{ field.label }}</label>
+          {{ field }}
+          {% if field.errors %}<div class="text-danger mt-1" style="font-size:.83rem">{{ field.errors|join:", " }}</div>{% endif %}
+        </div>
+        {% endfor %}
+        <div class="mt-1 mb-3" style="font-size:.82rem;color:var(--muted)">
+          Taxa da rota selecionada: <strong id="taxa_display" style="color:var(--verm)">—</strong>
+        </div>
+        <div class="d-flex gap-2 mt-4">
+          <button type="submit" class="btn btn-verm flex-grow-1 py-2 fw-bold">
+            <i class="bi bi-check-lg me-1"></i>Salvar Alterações
+          </button>
+          <a href="{% url 'entregas:despacho_lancar' despacho.pk %}" class="btn btn-outline-secondary py-2">Cancelar</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<script>
+var rotasInfo = {{ rotas_info|safe }};
+var selRota = document.querySelector('[name="rota"]');
+var taxaDisplay = document.getElementById('taxa_display');
+function atualizarTaxa() {
+  if (!selRota || !taxaDisplay) return;
+  var rid = selRota.value;
+  taxaDisplay.textContent = (rid && rotasInfo[rid])
+    ? 'R$ ' + parseFloat(rotasInfo[rid]).toFixed(2).replace('.', ',') : '—';
+}
+if (selRota) selRota.addEventListener('change', atualizarTaxa);
+atualizarTaxa();
+</script>
+{% endblock %}

@@ -2,183 +2,195 @@
 {% block title %}Abrir Caixa{% endblock %}
 {% block nav_caixa %}active{% endblock %}
 {% block content %}
-<div class="container py-4" style="max-width:750px">
-    <div class="d-flex align-items-center gap-3 mb-4">
-        <a href="{% url 'caixa:lista' %}" class="btn btn-sm btn-outline-secondary">
-            <i class="bi bi-arrow-left"></i>
-        </a>
-        <div>
-            <h1 style="color:#fff;font-weight:700;font-size:1.4rem;margin:0">
-                <i class="bi bi-lock-open me-2" style="color:var(--verm)"></i>Abertura de Caixa
-            </h1>
-            <p class="mb-0" style="color:var(--muted);font-size:.83rem">Conte e informe as notas e moedas presentes</p>
-        </div>
+<div class="container py-4" style="max-width:700px">
+  <div class="d-flex align-items-center gap-3 mb-4">
+    <a href="{% url 'caixa:lista' %}" class="btn btn-sm btn-outline-secondary">
+      <i class="bi bi-arrow-left"></i>
+    </a>
+    <div>
+      <h1 style="color:#fff;font-weight:700;font-size:1.4rem;margin:0">
+        <i class="bi bi-lock-open me-2" style="color:var(--verm)"></i>Abertura de Caixa
+      </h1>
+      <p class="mb-0" style="color:var(--muted);font-size:.83rem">Conte e informe as cédulas presentes no caixa</p>
+    </div>
+  </div>
+
+  <form method="post" id="formAbertura">
+    {% csrf_token %}
+    {# Sempre modo detalhado — sem campo responsável #}
+    <input type="hidden" name="modo" value="detalhado">
+    <input type="hidden" name="responsavel" value="Operador">
+
+    <!-- Notas -->
+    <div class="card mb-3">
+      <div class="card-header">
+        <i class="bi bi-cash me-2" style="color:var(--verm)"></i><strong>Notas</strong>
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-hover mb-0" style="table-layout:fixed">
+          <thead>
+            <tr>
+              <th style="width:40%">Denominação</th>
+              <th style="width:30%" class="text-center">Quantidade</th>
+              <th style="width:30%" class="text-end pe-3">Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for cod, label, valor in denominacoes %}
+            {% if 'nota' in cod %}
+            <tr>
+              <td><span class="fw-medium text-white">{{ label }}</span></td>
+              <td>
+                <div class="d-flex align-items-center justify-content-center gap-1">
+                  <button type="button" class="btn btn-sm btn-outline-secondary px-2 btn-dec"
+                          data-target="in_{{ cod }}" tabindex="-1">−</button>
+                  <input type="number" name="qtd_{{ cod }}" value="0" min="0"
+                         class="form-control form-control-sm text-center denom-qtd qtd-field"
+                         style="width:64px;background:#1e1e1e;border-color:#333;color:#fff"
+                         data-centavos="{{ valor|floatformat:2 }}"
+                         id="in_{{ cod }}">
+                  <button type="button" class="btn btn-sm btn-outline-secondary px-2 btn-inc"
+                          data-target="in_{{ cod }}" tabindex="-1">+</button>
+                </div>
+              </td>
+              <td class="text-end pe-3 fw-bold" style="color:var(--verm)" id="sub_{{ cod }}">R$ 0,00</td>
+            </tr>
+            {% endif %}
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
 
-    <form method="post">
-        {% csrf_token %}
+    <!-- Moedas -->
+    <div class="card mb-3">
+      <div class="card-header">
+        <i class="bi bi-coin me-2" style="color:#ffa500"></i><strong>Moedas</strong>
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-hover mb-0" style="table-layout:fixed">
+          <thead>
+            <tr>
+              <th style="width:40%">Denominação</th>
+              <th style="width:30%" class="text-center">Quantidade</th>
+              <th style="width:30%" class="text-end pe-3">Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for cod, label, valor in denominacoes %}
+            {% if 'moeda' in cod %}
+            <tr>
+              <td><span class="fw-medium text-white">{{ label }}</span></td>
+              <td>
+                <div class="d-flex align-items-center justify-content-center gap-1">
+                  <button type="button" class="btn btn-sm btn-outline-secondary px-2 btn-dec"
+                          data-target="in_{{ cod }}" tabindex="-1">−</button>
+                  <input type="number" name="qtd_{{ cod }}" value="0" min="0"
+                         class="form-control form-control-sm text-center denom-qtd qtd-field"
+                         style="width:64px;background:#1e1e1e;border-color:#333;color:#fff"
+                         data-centavos="{{ valor|floatformat:2 }}"
+                         id="in_{{ cod }}">
+                  <button type="button" class="btn btn-sm btn-outline-secondary px-2 btn-inc"
+                          data-target="in_{{ cod }}" tabindex="-1">+</button>
+                </div>
+              </td>
+              <td class="text-end pe-3 fw-bold" style="color:#ffa500" id="sub_{{ cod }}">R$ 0,00</td>
+            </tr>
+            {% endif %}
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
 
-        <div class="card mb-3">
-            <div class="card-body py-3">
-                <label class="form-label">Responsável pelo Caixa</label>
-                <input type="text" name="responsavel" class="form-control bg-dark text-light border-secondary"
-                       placeholder="Nome do operador" required>
-            </div>
-        </div>
+    <!-- Total -->
+    <div class="card mb-4" style="border-color:var(--verm);background:rgba(232,57,14,.06)">
+      <div class="card-body d-flex justify-content-between align-items-center py-3">
+        <span class="fs-5 fw-bold text-white">
+          <i class="bi bi-calculator me-2"></i>Total em Caixa
+        </span>
+        <span class="fw-bold" style="font-size:2rem;color:var(--verm)" id="totalGeral">R$ 0,00</span>
+      </div>
+    </div>
 
-        <!-- Notas -->
-        <div class="card mb-3">
-            <div class="card-header">
-                <i class="bi bi-cash me-2" style="color:var(--verm)"></i><strong>Notas</strong>
-            </div>
-            <div class="card-body p-0">
-                <table class="table table-hover mb-0" style="table-layout:fixed">
-                    <thead>
-                        <tr>
-                            <th style="width:42%">Denominação</th>
-                            <th style="width:28%" class="text-center">Quantidade</th>
-                            <th style="width:15%" class="text-center">Unit.</th>
-                            <th style="width:15%" class="text-end pe-3">Subtotal</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for cod, label, valor in denominacoes %}
-                        {% if 'nota' in cod %}
-                        <tr>
-                            <td>
-                                <div class="d-flex align-items-center gap-2">
-                                    <span style="font-size:1.1rem">💵</span>
-                                    <span class="fw-medium text-white">{{ label }}</span>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="d-flex align-items-center justify-content-center gap-1">
-                                    <button type="button" class="btn btn-sm btn-outline-secondary px-2 btn-dec"
-                                            data-target="in_{{ cod }}">−</button>
-                                    <input type="number" name="qtd_{{ cod }}" value="0" min="0"
-                                           class="form-control form-control-sm text-center denom-qtd"
-                                           style="width:64px;background:#1e1e1e;border-color:#333;color:#fff"
-                                           data-valor="{{ valor }}" id="in_{{ cod }}">
-                                    <button type="button" class="btn btn-sm btn-outline-secondary px-2 btn-inc"
-                                            data-target="in_{{ cod }}">+</button>
-                                </div>
-                            </td>
-                            <td class="text-center" style="color:var(--muted);font-size:.85rem">
-                                R$ {{ valor|floatformat:2 }}
-                            </td>
-                            <td class="text-end pe-3 fw-bold" style="color:var(--verm)" id="sub_{{ cod }}">
-                                R$ 0,00
-                            </td>
-                        </tr>
-                        {% endif %}
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Moedas -->
-        <div class="card mb-3">
-            <div class="card-header">
-                <i class="bi bi-coin me-2" style="color:#ffa500"></i><strong>Moedas</strong>
-            </div>
-            <div class="card-body p-0">
-                <table class="table table-hover mb-0" style="table-layout:fixed">
-                    <thead>
-                        <tr>
-                            <th style="width:42%">Denominação</th>
-                            <th style="width:28%" class="text-center">Quantidade</th>
-                            <th style="width:15%" class="text-center">Unit.</th>
-                            <th style="width:15%" class="text-end pe-3">Subtotal</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for cod, label, valor in denominacoes %}
-                        {% if 'moeda' in cod %}
-                        <tr>
-                            <td>
-                                <div class="d-flex align-items-center gap-2">
-                                    <span style="font-size:1.1rem">🪙</span>
-                                    <span class="fw-medium text-white">{{ label }}</span>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="d-flex align-items-center justify-content-center gap-1">
-                                    <button type="button" class="btn btn-sm btn-outline-secondary px-2 btn-dec"
-                                            data-target="in_{{ cod }}">−</button>
-                                    <input type="number" name="qtd_{{ cod }}" value="0" min="0"
-                                           class="form-control form-control-sm text-center denom-qtd"
-                                           style="width:64px;background:#1e1e1e;border-color:#333;color:#fff"
-                                           data-valor="{{ valor }}" id="in_{{ cod }}">
-                                    <button type="button" class="btn btn-sm btn-outline-secondary px-2 btn-inc"
-                                            data-target="in_{{ cod }}">+</button>
-                                </div>
-                            </td>
-                            <td class="text-center" style="color:var(--muted);font-size:.85rem">
-                                R$ {{ valor|floatformat:2 }}
-                            </td>
-                            <td class="text-end pe-3 fw-bold" style="color:#ffa500" id="sub_{{ cod }}">
-                                R$ 0,00
-                            </td>
-                        </tr>
-                        {% endif %}
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Total -->
-        <div class="card mb-4" style="border-color:var(--verm);background:rgba(232,57,14,.06)">
-            <div class="card-body d-flex justify-content-between align-items-center py-3">
-                <span class="fs-5 fw-bold text-white">
-                    <i class="bi bi-calculator me-2"></i>Total em Caixa
-                </span>
-                <span class="fw-bold" style="font-size:2rem;color:var(--verm)" id="totalGeral">R$ 0,00</span>
-            </div>
-        </div>
-
-        <button type="submit" class="btn btn-verm btn-lg w-100 py-3">
-            <i class="bi bi-lock-open me-2"></i>Abrir Caixa
-        </button>
-    </form>
+    <button type="submit" class="btn btn-verm btn-lg w-100 py-3">
+      <i class="bi bi-lock-open me-2"></i>Abrir Caixa
+    </button>
+  </form>
 </div>
 
 <script>
+// Converte "0,50" ou "0.50" → 0.50 corretamente independente do locale
+function parseCentavos(str) {
+  // data-centavos sempre vem no formato "0,50" do Django pt-BR ou "0.50"
+  return parseFloat(String(str).replace(',', '.')) || 0;
+}
+
 function fmt(v) {
-    return 'R$ ' + v.toFixed(2).replace('.', ',');
+  return 'R$ ' + v.toFixed(2).replace('.', ',');
 }
+
 function recalc() {
-    let total = 0;
-    document.querySelectorAll('.denom-qtd').forEach(function(inp) {
-        const qtd = parseInt(inp.value) || 0;
-        const val = parseFloat(inp.dataset.valor) || 0;
-        const sub = qtd * val;
-        total += sub;
-        const cod = inp.id.replace('in_', '');
-        const el = document.getElementById('sub_' + cod);
-        if (el) el.textContent = fmt(sub);
-    });
-    document.getElementById('totalGeral').textContent = fmt(total);
+  let total = 0;
+  document.querySelectorAll('.denom-qtd').forEach(function(inp) {
+    const qtd  = parseInt(inp.value) || 0;
+    const val  = parseCentavos(inp.dataset.centavos);
+    const sub  = qtd * val;
+    total += sub;
+    const cod = inp.id.replace('in_', '');
+    const el  = document.getElementById('sub_' + cod);
+    if (el) el.textContent = fmt(sub);
+  });
+  const tg = document.getElementById('totalGeral');
+  if (tg) tg.textContent = fmt(total);
 }
-document.querySelectorAll('.denom-qtd').forEach(function(inp) {
-    inp.addEventListener('input', recalc);
-});
+
+// +/- botões
 document.querySelectorAll('.btn-inc').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-        const inp = document.getElementById(btn.dataset.target);
-        inp.value = (parseInt(inp.value) || 0) + 1;
-        recalc();
-    });
+  btn.addEventListener('click', function() {
+    const inp = document.getElementById(btn.dataset.target);
+    inp.value = (parseInt(inp.value) || 0) + 1;
+    recalc();
+  });
 });
-document.querySelectorAll('.btn-dec').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-        const inp = document.getElementById(btn.dataset.target);
-        const v = (parseInt(inp.value) || 0) - 1;
-        inp.value = v < 0 ? 0 : v;
-        recalc();
-    });
+document.querySelectorAll('.btn-dec').forEach(function() {
+  this.addEventListener('click', function() {
+    const inp = document.getElementById(this.dataset.target);
+    inp.value = Math.max(0, (parseInt(inp.value) || 0) - 1);
+    recalc();
+  });
 });
+document.querySelectorAll('.btn-dec').forEach(btn => btn.addEventListener('click', function() {
+  const inp = document.getElementById(btn.dataset.target);
+  inp.value = Math.max(0, (parseInt(inp.value) || 0) - 1);
+  recalc();
+}));
+
+document.querySelectorAll('.denom-qtd').forEach(inp => inp.addEventListener('input', recalc));
+
+// Tab / Enter navega entre campos de quantidade (ignora botões +/-)
+const campos = Array.from(document.querySelectorAll('.qtd-field'));
+campos.forEach(function(inp, idx) {
+  inp.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' || (e.key === 'Tab' && !e.shiftKey)) {
+      e.preventDefault();
+      const prox = campos[idx + 1];
+      if (prox) {
+        prox.focus();
+        prox.select();
+      } else {
+        // Último campo: foca no botão de submit
+        document.querySelector('[type="submit"]').focus();
+      }
+    }
+  });
+  // Seleciona tudo ao entrar no campo para facilitar digitação
+  inp.addEventListener('focus', function() { this.select(); });
+});
+
+// Foca no primeiro campo ao carregar
+if (campos.length) { campos[0].focus(); campos[0].select(); }
+
 recalc();
 </script>
 {% endblock %}

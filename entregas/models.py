@@ -89,13 +89,32 @@ class Despacho(models.Model):
         ordering = ['-data_saida']
 
 
+PAGAMENTO_CHOICES = [
+    ('dinheiro', 'Dinheiro'),
+    ('cartao', 'Cartão'),
+    ('online', 'Pago Online'),
+    ('pix', 'Pix'),
+]
+
+
+class Retirada(models.Model):
+    """Cliente pediu delivery mas vai retirar no balcão."""
+    data = models.DateTimeField(default=timezone.now)
+    forma_pagamento = models.CharField(max_length=20, choices=PAGAMENTO_CHOICES)
+    valor = models.DecimalField(max_digits=10, decimal_places=2)
+    observacoes = models.CharField(max_length=255, blank=True)
+
+    def __str__(self):
+        return f"Retirada #{self.pk} — {self.get_forma_pagamento_display()} — R$ {self.valor}"
+
+    class Meta:
+        verbose_name = 'Retirada'
+        verbose_name_plural = 'Retiradas'
+        ordering = ['-data']
+
+
 class Entrega(models.Model):
-    PAGAMENTO_CHOICES = [
-        ('dinheiro', 'Dinheiro'),
-        ('cartao', 'Cartão'),
-        ('online', 'Pago Online'),
-        ('pix', 'Pix'),
-    ]
+    PAGAMENTO_CHOICES = PAGAMENTO_CHOICES
 
     despacho = models.ForeignKey(Despacho, on_delete=models.CASCADE, related_name='entregas')
     rota = models.ForeignKey(Rota, on_delete=models.PROTECT, related_name='entregas')

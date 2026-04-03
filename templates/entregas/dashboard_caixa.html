@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% load entregas_extras %}
+{% block title %}Dashboard de Caixa{% endblock %}
+{% block content %}
+<div class="container-fluid py-4">
+  <div class="d-flex align-items-center gap-3 mb-4">
+    <a href="{% url 'entregas:dashboard' %}" class="btn btn-sm btn-outline-secondary">
+      <i class="bi bi-arrow-left"></i>
+    </a>
+    <div class="flex-grow-1">
+      <h1 style="color:#fff;font-weight:700;font-size:1.4rem;margin:0">
+        <i class="bi bi-bar-chart-line me-2" style="color:var(--verm)"></i>Dashboard de Caixa
+      </h1>
+      <p class="mb-0" style="color:var(--muted);font-size:.83rem">Entregas e retiradas por forma de pagamento</p>
+    </div>
+    <!-- Seletor de data -->
+    <form method="get" class="d-flex gap-2 align-items-center">
+      <input type="date" name="data" value="{{ data_str }}"
+             class="form-control form-control-sm"
+             style="background:#1e1e1e;border-color:#333;color:#fff;width:150px"
+             onchange="this.form.submit()">
+    </form>
+  </div>
+
+  <!-- Cards totais -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="card text-center py-3">
+        <div style="color:var(--muted);font-size:.8rem">Total Geral</div>
+        <div class="fw-bold text-success" style="font-size:1.7rem">R$ {{ total_geral|floatformat:2 }}</div>
+        <div style="color:var(--muted);font-size:.78rem">{{ qtd_total }} pedido(s)</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card text-center py-3">
+        <div style="color:var(--muted);font-size:.8rem">Entregas</div>
+        <div class="fw-bold text-warning" style="font-size:1.7rem">R$ {{ total_entregas|floatformat:2 }}</div>
+        <div style="color:var(--muted);font-size:.78rem">{{ qtd_entregas }} entrega(s)</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card text-center py-3">
+        <div style="color:var(--muted);font-size:.8rem">Retiradas</div>
+        <div class="fw-bold" style="font-size:1.7rem;color:#9d6fe8">R$ {{ total_retiradas|floatformat:2 }}</div>
+        <div style="color:var(--muted);font-size:.78rem">{{ qtd_retiradas }} retirada(s)</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card text-center py-3">
+        <div style="color:var(--muted);font-size:.8rem">Data</div>
+        <div class="fw-bold text-white" style="font-size:1.3rem">{{ data_ref|date:'d/m' }}</div>
+        <div style="color:var(--muted);font-size:.78rem">{{ data_ref|date:'l' }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabela por forma de pagamento -->
+  <div class="card">
+    <div class="card-header">
+      <i class="bi bi-table me-2"></i>Breakdown por Forma de Pagamento
+    </div>
+    <div class="card-body p-0">
+      <table class="table mb-0" style="table-layout:fixed">
+        <thead>
+          <tr>
+            <th>Forma</th>
+            <th class="text-end">Entregas</th>
+            <th class="text-end">Retiradas</th>
+            <th class="text-end" style="color:var(--verm)">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for forma in formas %}
+          {% with label=formas_label|get_item:forma e=pgto_entregas|get_item:forma r=pgto_retiradas|get_item:forma t=pgto_total|get_item:forma %}
+          {% if e or r %}
+          <tr>
+            <td>
+              {% if forma == 'dinheiro' %}
+                <span style="color:#5cb85c"><i class="bi bi-cash me-2"></i>Dinheiro</span>
+              {% elif forma == 'cartao' %}
+                <span style="color:#4da6ff"><i class="bi bi-credit-card me-2"></i>Cartão</span>
+              {% elif forma == 'pix' %}
+                <span style="color:#2898a7"><i class="bi bi-pix me-2"></i>Pix</span>
+              {% else %}
+                <span style="color:#9d6fe8"><i class="bi bi-phone me-2"></i>Online</span>
+              {% endif %}
+            </td>
+            <td class="text-end fw-medium text-white">R$ {{ e|floatformat:2 }}</td>
+            <td class="text-end fw-medium text-white">R$ {{ r|floatformat:2 }}</td>
+            <td class="text-end fw-bold" style="color:var(--verm)">R$ {{ t|floatformat:2 }}</td>
+          </tr>
+          {% endif %}
+          {% endwith %}
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr style="border-top:2px solid #444">
+            <td class="fw-bold text-white">Total</td>
+            <td class="text-end fw-bold text-warning">R$ {{ total_entregas|floatformat:2 }}</td>
+            <td class="text-end fw-bold" style="color:#9d6fe8">R$ {{ total_retiradas|floatformat:2 }}</td>
+            <td class="text-end fw-bold text-success fs-5">R$ {{ total_geral|floatformat:2 }}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

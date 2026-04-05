@@ -19,11 +19,13 @@
         {% if despacho.data_retorno %}· Retornou {{ despacho.data_retorno|date:'H:i' }}{% endif %}
       </span>
     </div>
-    <a href="{% url 'entregas:despacho_editar' despacho.pk %}" class="btn btn-sm btn-outline-warning"
-      title="Editar despacho">
+
+    <a href="{% url 'entregas:despacho_editar' despacho.pk %}"
+       class="btn btn-sm btn-outline-warning" title="Editar despacho">
       <i class="bi bi-pencil"></i>
     </a>
-    <!-- Progresso inline -->
+
+    <!-- Indicador -->
     <div class="text-end">
       <span class="fw-bold {% if despacho.pode_finalizar %}text-success{% else %}text-warning{% endif %}"
         style="font-size:1.4rem">
@@ -35,18 +37,19 @@
     </div>
   </div>
 
-  <!-- Barra de progresso slim -->
+  <!-- Barra de progresso -->
   <div class="prog-bar-bg mb-3" style="height:8px;border-radius:4px">
     {% if despacho.qtd_saida %}
     <div class="prog-bar-fill {% if despacho.pode_finalizar %}ok{% endif %}"
-      style="width:{% widthratio despacho.qtd_lancada despacho.qtd_saida 100 %}%;height:8px;border-radius:4px;transition:width .3s">
-    </div>
+      style="width:{% widthratio despacho.qtd_lancada despacho.qtd_saida 100 %}%;
+             height:8px;border-radius:4px;transition:width .3s"></div>
     {% endif %}
   </div>
 
+
   <div class="row g-3">
 
-    <!-- Coluna esquerda: form de lançamento -->
+    <!-- Coluna esquerda -->
     <div class="col-12 col-lg-5">
       <div class="sticky-top" style="top:70px">
 
@@ -55,8 +58,11 @@
           <div class="card-header py-2">
             <i class="bi bi-plus-circle me-1" style="color:var(--verm)"></i>
             Lançar Entrega
-            <span class="float-end badge bg-secondary">{{ despacho.qtd_lancada }}/{{ despacho.qtd_saida }}</span>
+            <span class="float-end badge bg-secondary">
+              {{ despacho.qtd_lancada }}/{{ despacho.qtd_saida }}
+            </span>
           </div>
+
           <div class="card-body p-3">
             <form method="post" id="formEntrega" autocomplete="off">
               {% csrf_token %}
@@ -70,47 +76,53 @@
                 </div>
               </div>
 
-              <!-- Pagamentos (formset inline) -->
+              <!-- FORMSET — apenas 1 linha visível inicialmente -->
               {{ pagamento_fs.management_form }}
               <div id="pagamentos-container">
+
                 {% for pf in pagamento_fs %}
                 <div class="pagamento-row d-flex gap-2 mb-2 align-items-end
-                  {% if pf.DELETE.value %}d-none{% endif %}" {% if pf.DELETE.value %}style="display:none!important" {% endif %}>
+                    {% if not forloop.first %}d-none{% endif %}"
+                    data-index="{{ forloop.counter0 }}">
+
                   {{ pf.id }}
+
                   <div style="flex:1">
                     {% if forloop.first %}
                     <label class="form-label mb-1" style="font-size:.85rem">Pagamento</label>
                     {% endif %}
                     {{ pf.forma_pagamento }}
                   </div>
+
                   <div style="flex:1">
                     {% if forloop.first %}
                     <label class="form-label mb-1" style="font-size:.85rem">Valor (R$)</label>
                     {% endif %}
                     {{ pf.valor }}
                   </div>
+
                   <div style="padding-bottom:2px">
-                    <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2 btn-remover-pgto"
-                      title="Remover pagamento">
+                    <button type="button"
+                            class="btn btn-sm btn-outline-danger py-0 px-2 btn-remover-pgto d-none">
                       <i class="bi bi-x" style="font-size:.9rem"></i>
                     </button>
-                    {# campo DELETE oculto — ativado pelo JS ao remover linha #}
                     <div style="display:none">{{ pf.DELETE }}</div>
                   </div>
                 </div>
                 {% endfor %}
               </div>
 
-              <!-- Botão adicionar forma -->
-              <button type="button" id="btn-add-pgto" class="btn btn-sm btn-outline-secondary w-100 mb-2">
+              <!-- Botão adicionar pagamento -->
+              <button type="button" id="btn-add-pgto"
+                      class="btn btn-sm btn-outline-secondary w-100 mb-2">
                 <i class="bi bi-plus me-1"></i>+ Outra forma de pagamento
               </button>
 
-              <!-- Atalhos de valor -->
+              <!-- Atalhos -->
               <div class="d-flex gap-1 flex-wrap mb-2" id="atalhoValores">
                 {% for v in "20,30,40,50,60,80,100"|split:"," %}
-                <button type="button" class="btn btn-sm btn-outline-secondary px-2 py-0" style="font-size:.78rem"
-                  onclick="setValor({{ v }})">{{ v }}</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary px-2 py-0"
+                  style="font-size:.78rem" onclick="setValor({{ v }})">{{ v }}</button>
                 {% endfor %}
               </div>
 
@@ -126,23 +138,26 @@
             </form>
           </div>
         </div>
+
         {% else %}
         <div class="card" style="border-color:#28a745">
           <div class="card-body text-center py-4">
             <i class="bi bi-check-circle-fill text-success" style="font-size:3rem"></i>
             <p class="fw-bold text-white mt-2 mb-1">Todas lançadas!</p>
-            <p style="color:var(--muted);font-size:.84rem">{{ despacho.qtd_lancada }} de {{ despacho.qtd_saida }}
-              confirmadas.</p>
+            <p style="color:var(--muted);font-size:.84rem">
+              {{ despacho.qtd_lancada }} de {{ despacho.qtd_saida }} confirmadas.
+            </p>
           </div>
         </div>
         {% endif %}
 
-        <!-- Totais por forma de pagamento -->
+        <!-- Totais -->
         {% if totais_pgto %}
         <div class="card mt-2">
           <div class="card-body py-2 px-3">
             {% for label, total in totais_pgto.items %}
-            <div class="d-flex justify-content-between" style="font-size:.84rem;padding:3px 0">
+            <div class="d-flex justify-content-between"
+                 style="font-size:.84rem;padding:3px 0">
               <span style="color:var(--muted)">{{ label }}</span>
               <span class="fw-bold text-white">R$ {{ total|floatformat:2 }}</span>
             </div>
@@ -151,12 +166,13 @@
         </div>
         {% endif %}
 
-        <!-- Botão finalizar -->
+        <!-- Finalizar -->
         <form method="post" class="mt-2">
           {% csrf_token %}
           {% if despacho.pode_finalizar %}
-          <button type="submit" name="finalizar" class="btn btn-success btn-lg w-100 fw-bold"
-            onclick="return confirm('Finalizar despacho?')">
+          <button type="submit" name="finalizar"
+                  class="btn btn-success btn-lg w-100 fw-bold"
+                  onclick="return confirm('Finalizar despacho?')">
             <i class="bi bi-check-circle-fill me-1"></i>Finalizar Despacho
           </button>
           {% else %}
@@ -169,7 +185,7 @@
       </div>
     </div>
 
-    <!-- Coluna direita: lista de entregas lançadas -->
+    <!-- Coluna direita -->
     <div class="col-12 col-lg-7">
       <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center py-2">
@@ -178,61 +194,77 @@
             {{ despacho.qtd_lancada }}/{{ despacho.qtd_saida }}
           </span>
         </div>
+
         <div class="card-body p-0">
           {% for e in entregas %}
-          <div class="e-item d-flex align-items-center gap-2 px-3 py-2" style="border-bottom:1px solid #1a1a1a">
+          <div class="e-item d-flex align-items-center gap-2 px-3 py-2"
+               style="border-bottom:1px solid #1a1a1a">
             <div class="fw-bold text-white" style="min-width:22px;text-align:center;font-size:.9rem">
               {{ forloop.counter }}
             </div>
+
             <div class="flex-grow-1">
-              <div class="fw-medium text-white" style="font-size:.9rem">{{ e.rota.nome }}</div>
-              <div style="font-size:.78rem;color:var(--muted)">
-                {# Itera sobre todos os pagamentos da entrega #}
-                {% for p in e.pagamentos.all %}
-                {% if p.forma_pagamento == 'dinheiro' %}
-                <span style="color:#5cb85c"><i class="bi bi-cash me-1"></i>Dinheiro</span>
-                {% elif p.forma_pagamento == 'cartao' %}
-                <span style="color:#4da6ff"><i class="bi bi-credit-card me-1"></i>Cartão</span>
-                {% elif p.forma_pagamento == 'pix' %}
-                <span style="color:#2898a7"><i class="bi bi-pix me-1"></i>Pix</span>
-                {% elif p.forma_pagamento == 'online' %}
-                <span style="color:#9d6fe8"><i class="bi bi-phone me-2"></i>Online</span>
-                {% else %}
-                <span style="color:#6e8feb"><i class="bi bi-phone me-2"></i>Yooga</span>
-                {% endif %}
-                <span class="fw-bold text-white">R$ {{ p.valor|floatformat:2 }}</span>
-                {% if not forloop.last %}
-                <span style="color:#555"> + </span>
-                {% endif %}
-                {% endfor %}
-                <span class="ms-1" style="color:#555">· taxa R$ {{ e.rota.taxa_entrega|floatformat:2 }}</span>
-                {% if e.observacoes %}<span class="ms-1" style="color:#666">· {{ e.observacoes }}</span>{% endif %}
+              <div class="fw-medium text-white" style="font-size:.9rem">
+                {{ e.rota.nome }}
               </div>
-              {# Total da entrega se tiver pagamento parcial (mais de 1 pagamento) #}
+
+              <div style="font-size:.78rem;color:var(--muted)">
+                {% for p in e.pagamentos.all %}
+                  {% if p.forma_pagamento == 'dinheiro' %}
+                    <span style="color:#5cb85c"><i class="bi bi-cash me-1"></i>Dinheiro</span>
+                  {% elif p.forma_pagamento == 'cartao' %}
+                    <span style="color:#4da6ff"><i class="bi bi-credit-card me-1"></i>Cartão</span>
+                  {% elif p.forma_pagamento == 'pix' %}
+                    <span style="color:#2898a7"><i class="bi bi-pix me-1"></i>Pix</span>
+                  {% elif p.forma_pagamento == 'online' %}
+                    <span style="color:#9d6fe8"><i class="bi bi-phone me-2"></i>Online</span>
+                  {% else %}
+                    <span style="color:#6e8feb"><i class="bi bi-phone me-2"></i>Yooga</span>
+                  {% endif %}
+
+                  <span class="fw-bold text-white">R$ {{ p.valor|floatformat:2 }}</span>
+                  {% if not forloop.last %}<span style="color:#555"> + </span>{% endif %}
+                {% endfor %}
+
+                <span class="ms-1" style="color:#555">
+                  · taxa R$ {{ e.rota.taxa_entrega|floatformat:2 }}
+                </span>
+
+                {% if e.observacoes %}
+                <span class="ms-1" style="color:#666">· {{ e.observacoes }}</span>
+                {% endif %}
+              </div>
+
               {% if e.pagamentos.count > 1 %}
               <div style="font-size:.78rem;margin-top:2px">
-                <span style="color:var(--muted)">Total: </span>
+                <span style="color:var(--muted)">Total:</span>
                 <span class="fw-bold text-white">R$ {{ e.valor_total|floatformat:2 }}</span>
               </div>
               {% endif %}
             </div>
+
             <div class="d-flex gap-1 flex-shrink-0">
-              <a href="{% url 'entregas:entrega_editar' e.pk %}" class="btn btn-sm btn-outline-warning py-0 px-2">
+              <a href="{% url 'entregas:entrega_editar' e.pk %}"
+                 class="btn btn-sm btn-outline-warning py-0 px-2">
                 <i class="bi bi-pencil" style="font-size:.8rem"></i>
               </a>
+
               <form method="post">
                 {% csrf_token %}
                 <input type="hidden" name="entrega_id" value="{{ e.pk }}">
-                <button type="submit" name="remover_entrega" class="btn btn-sm btn-outline-danger py-0 px-2"
-                  onclick="return confirm('Remover?')">
+                <button type="submit" name="remover_entrega"
+                        class="btn btn-sm btn-outline-danger py-0 px-2"
+                        onclick="return confirm('Remover?')">
                   <i class="bi bi-trash3" style="font-size:.8rem"></i>
                 </button>
               </form>
             </div>
           </div>
+
           {% empty %}
           <div class="text-center py-5" style="color:var(--muted)">
-            <i class="bi bi-inbox fs-2 d-block mb-2"></i>Nenhuma entrega lançada
+            <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+            Nenhuma entrega lançada
           </div>
           {% endfor %}
         </div>
@@ -243,19 +275,20 @@
 </div>
 
 <script>
-  var rotasInfo = {{ rotas_info| safe }};
+
+  var rotasInfo = {{ rotas_info|safe }};
   var DESP_ID = '{{ despacho.pk }}';
   var STORAGE_KEY = 'despacho_lancar_' + DESP_ID;
 
   var selRota = document.getElementById('id_rota_entrega');
   var taxaDisplay = document.getElementById('taxa_display');
+
   var container = document.getElementById('pagamentos-container');
   var btnAdd = document.getElementById('btn-add-pgto');
 
-  // Prefixo do management_form gerado pelo Django para o formset
-  var FS_PREFIX = 'pagamentoentrega_set';
 
-  // ── Taxa display ─────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────
+  // Atualizar taxa
   function atualizarTaxa() {
     if (!selRota || !taxaDisplay) return;
     var rid = selRota.value;
@@ -265,103 +298,98 @@
   }
   if (selRota) selRota.addEventListener('change', atualizarTaxa);
 
-  // ── Persistência: salva rota no sessionStorage ────────────────────────────────
+
+  // ─────────────────────────────────────────────────────────────
+  // Salvar estado (rota + pagamento)
   function salvarEstado() {
     try {
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
-        rota: selRota ? selRota.value : '',
-      }));
-    } catch (e) { }
+      let estado = {
+        rota: selRota ? selRota.value : "",
+        pgto: ""
+      };
+
+      let selPgto1 = document.querySelector('.pagamento-row:not(.d-none) select');
+      if (selPgto1) estado.pgto = selPgto1.value;
+
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(estado));
+    } catch (e) {}
   }
+
+  // Restaurar estado salvo
   function restaurarEstado() {
     try {
       var raw = sessionStorage.getItem(STORAGE_KEY);
       if (!raw) return;
       var estado = JSON.parse(raw);
+
       if (selRota && estado.rota) selRota.value = estado.rota;
-    } catch (e) { }
+
+      // restaurar forma pagamento
+      let selPgto1 = document.querySelector('.pagamento-row:not(.d-none) select');
+      if (selPgto1 && estado.pgto) selPgto1.value = estado.pgto;
+
+    } catch (e) {}
   }
+
   if (selRota) selRota.addEventListener('change', salvarEstado);
 
-  // ── Formset: adicionar nova linha de pagamento ────────────────────────────────
-  function getTotalForms() {
-    return document.getElementById('id_' + FS_PREFIX + '-TOTAL_FORMS');
-  }
 
+  // ─────────────────────────────────────────────────────────────
+  // Adicionar forma de pagamento (somente revelar próximo campo)
   if (btnAdd && container) {
     btnAdd.addEventListener('click', function () {
-      var totalForms = getTotalForms();
-      var idx = parseInt(totalForms.value);
 
-      // Clona a primeira linha do formset como template
-      var template = container.querySelector('.pagamento-row');
-      if (!template) return;
+      let linhas = container.querySelectorAll('.pagamento-row');
 
-      var nova = template.cloneNode(true);
-      nova.style.display = '';
-      nova.classList.remove('d-none');
+      let prox = Array.from(linhas).find(l => l.classList.contains('d-none'));
+      if (!prox) return;
 
-      // Atualiza todos os atributos name/id/for com o novo índice
-      nova.querySelectorAll('input, select').forEach(function (el) {
-        if (el.name) el.name = el.name.replace(/-\d+-/, '-' + idx + '-');
-        if (el.id) el.id = el.id.replace(/-\d+-/, '-' + idx + '-');
-        if (el.type === 'checkbox') el.checked = false;
-        else if (el.type !== 'hidden') el.value = '';
-      });
-      nova.querySelectorAll('label').forEach(function (el) {
-        if (el.htmlFor) el.htmlFor = el.htmlFor.replace(/-\d+-/, '-' + idx + '-');
-        el.style.display = 'none'; // esconde label nas linhas extras
-      });
+      prox.classList.remove('d-none');
 
-      container.appendChild(nova);
-      totalForms.value = idx + 1;
-
-      // Foca no campo valor da nova linha
-      var novoValor = nova.querySelector('.pagamento-valor');
-      if (novoValor) { novoValor.value = ''; novoValor.focus(); }
+      let btn = prox.querySelector('.btn-remover-pgto');
+      if (btn) btn.classList.remove('d-none');
     });
   }
 
-  // ── Formset: remover linha (marca DELETE) ────────────────────────────────────
+
+  // ─────────────────────────────────────────────────────────────
+  // Remover forma de pagamento (esconde campo)
   document.addEventListener('click', function (e) {
-    var btn = e.target.closest('.btn-remover-pgto');
+    let btn = e.target.closest('.btn-remover-pgto');
     if (!btn) return;
-    var row = btn.closest('.pagamento-row');
-    if (!row) return;
 
-    // Não permite remover se for a única linha visível
-    var linhasVisiveis = Array.from(container.querySelectorAll('.pagamento-row'))
-      .filter(function (r) { return r.style.display !== 'none' && !r.classList.contains('d-none'); });
-    if (linhasVisiveis.length <= 1) return;
+    let row = btn.closest('.pagamento-row');
+    let del = row.querySelector('input[name*="DELETE"]');
 
-    var del = row.querySelector('input[name*="DELETE"]');
-    if (del) { del.checked = true; }
-    row.style.display = 'none';
+    if (del) del.checked = true;
+
+    row.classList.add('d-none');
   });
 
-  // ── Atalho de valor: aplica na última linha de valor visível ──────────────────
+
+  // ─────────────────────────────────────────────────────────────
+  // Atalho: aplicar valor no último campo visível
   function setValor(v) {
-    var visiveis = Array.from(document.querySelectorAll('.pagamento-valor'))
-      .filter(function (el) {
-        var row = el.closest('.pagamento-row');
-        return row && row.style.display !== 'none' && !row.classList.contains('d-none');
-      });
-    if (visiveis.length) {
-      visiveis[visiveis.length - 1].value = v;
-      visiveis[visiveis.length - 1].focus();
-    }
+    let visiveis = [...document.querySelectorAll('.pagamento-row:not(.d-none) input[type=number]')];
+    if (!visiveis.length) return;
+    let last = visiveis[visiveis.length - 1];
+    last.value = v;
+    last.focus();
   }
 
-  // ── Ao submeter: salva estado (rota persiste para próxima entrega) ─────────────
-  var formEntrega = document.getElementById('formEntrega');
-  if (formEntrega) formEntrega.addEventListener('submit', salvarEstado);
 
-  // ── Inicialização ─────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────
+  // Inicialização
   restaurarEstado();
   atualizarTaxa();
 
-  // Foca no primeiro campo de valor disponível
-  var primVal = document.querySelector('.pagamento-valor');
-  if (primVal) { primVal.focus(); primVal.select(); }
+  // Focar no valor
+  let prim = document.querySelector('.pagamento-row:not(.d-none) input[type=number]');
+  if (prim) { prim.focus(); prim.select(); }
+
+  document.getElementById('formEntrega')
+          ?.addEventListener('submit', salvarEstado);
+
 </script>
+
 {% endblock %}

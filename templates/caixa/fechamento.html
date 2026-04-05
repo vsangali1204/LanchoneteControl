@@ -3,7 +3,103 @@
 {% block title %}Fechar Caixa{% endblock %}
 {% block nav_caixa %}active{% endblock %}
 {% block content %}
+<style>
+    /* ----------- VISUAL GERAL ----------- */
+    body { color: #e9e9e9 !important; }
+    .page-title { color: #fff; font-weight: 700; }
+    .page-subtitle { color: #c5c5c5; }
+
+    /* ----------- CARDS ----------- */
+    .stat-card {
+        background:#1f1f1f;
+        border:1px solid #2b2b2b;
+        padding:20px;
+        border-radius:12px;
+        box-shadow:0 0 12px rgba(0,0,0,0.3);
+    }
+    .stat-label {
+        font-size:.85rem;
+        text-transform:uppercase;
+        color:#b3b3b3;
+        margin-bottom:6px;
+        letter-spacing:.5px;
+    }
+    .stat-value {
+        font-size:1.6rem;
+        font-weight:700;
+        color:#fff;
+    }
+    .stat-card.danger {
+        border-color:#b02a37;
+        box-shadow:0 0 12px rgba(176,42,55,.25);
+    }
+
+    /* ----------- TABELAS ----------- */
+    table thead th {
+        background:#262626 !important;
+        color:#fff !important;
+        font-weight:700;
+        border-bottom:2px solid #333 !important;
+    }
+    table tbody tr {
+        background:#1a1a1a !important;
+        color:#e9e9e9 !important;
+    }
+    table tbody tr:hover {
+        background:#242424 !important;
+    }
+    table td, table th {
+        border-color:#333 !important;
+    }
+
+    /* Cores de marcação */
+    .table-danger { background-color: rgba(220,53,69,.18) !important; }
+    .table-success { background-color: rgba(40,167,69,.18) !important; }
+
+    /* ----------- ALERTAS ----------- */
+    .alert {
+        border-radius:10px;
+        padding:14px 18px;
+        font-size:1rem;
+        background:#242424;
+        border:1px solid #333;
+        color:#e9e9e9;
+    }
+    .alert-success {
+        border-color:#1e7e34 !important;
+        background:rgba(40,167,69,.18) !important;
+        color:#7bffb1 !important;
+    }
+    .alert-warning {
+        border-color:#b88b00 !important;
+        background:rgba(255,193,7,.18) !important;
+        color:#ffe58b !important;
+    }
+    .alert-danger {
+        border-color:#b02a37 !important;
+        background:rgba(220,53,69,.18) !important;
+        color:#ff9b9b !important;
+    }
+
+    /* ----------- BOTÕES ----------- */
+    .btn-outline-secondary {
+        color:#dcdcdc !important;
+        border-color:#666 !important;
+    }
+    .btn-outline-secondary:hover {
+        background:#333 !important;
+    }
+
+    /* Impressão mais clara */
+    @media print {
+        body { background:#fff !important; color:#000 !important; }
+        table tbody tr { background:#fff !important; color:#000 !important; }
+        table thead th { background:#eaeaea !important; color:#000 !important; }
+        .stat-card { background:#fff !important; color:#000 !important; }
+    }
+</style>
 <div class="container py-4" style="max-width:700px">
+
   <div class="d-flex align-items-center gap-3 mb-4">
     <a href="{% url 'caixa:detalhe' caixa.pk %}" class="btn btn-sm btn-outline-secondary">
       <i class="bi bi-arrow-left"></i>
@@ -18,163 +114,172 @@
     </div>
   </div>
 
-  <ul class="nav nav-pills mb-3">
-    <li class="nav-item">
-      <button class="nav-link active" id="tab-simples" type="button" onclick="setModo('simples')">
-        <i class="bi bi-lightning me-1"></i>Rápido
-      </button>
-    </li>
-    <li class="nav-item">
-      <button class="nav-link" id="tab-detalhado" type="button" onclick="setModo('detalhado')">
-        <i class="bi bi-list-ol me-1"></i>Com contagem
-      </button>
-    </li>
-  </ul>
-
   <form method="post">
     {% csrf_token %}
-    <input type="hidden" name="modo" id="modoInput" value="simples">
+    <input type="hidden" name="modo" value="detalhado">
 
-    <!-- Modo SIMPLES -->
-    <div id="painelSimples">
-      <div class="card mb-4" style="border-color:var(--verm)">
-        <div class="card-body py-4 text-center">
-          <label class="form-label fw-bold fs-6">Total Contado em Caixa (R$)</label>
-          <input type="number" name="valor_final" value="{{ caixa.total_abertura|floatformat:2 }}" min="0" step="0.01"
-                 class="form-control bg-dark text-light border-secondary text-center fw-bold"
-                 style="font-size:2rem;max-width:220px;margin:0 auto" id="valorFinalInput"
-                 oninput="atualizarDiff()">
-          <div class="mt-3" id="diffSimples" style="font-size:1rem;font-weight:600"></div>
-        </div>
+    <!-- NOTAS -->
+    <div class="card mb-3">
+      <div class="card-header">
+        <i class="bi bi-cash me-2" style="color:var(--verm)"></i><strong>Notas</strong>
+      </div>
+
+      <div class="card-body p-0">
+        <table class="table table-hover mb-0" style="table-layout:fixed">
+          <thead>
+            <tr>
+              <th style="width:40%">Denominação</th>
+              <th style="width:30%" class="text-center">Quantidade</th>
+              <th style="width:30%" class="text-end pe-3">Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for cod, label, valor in denominacoes %}{% if 'nota' in cod %}
+            <tr>
+              <td><span class="fw-medium text-white">{{ label }}</span></td>
+              <td>
+                <div class="d-flex align-items-center justify-content-center gap-1">
+                  <button type="button" class="btn btn-sm btn-outline-secondary px-2 btn-dec"
+                    data-target="in_{{ cod }}">−</button>
+
+                  <input type="number" name="qtd_{{ cod }}"
+                         value="0"
+                         min="0"
+                         class="form-control form-control-sm text-center denom-qtd qtd-field"
+                         style="width:64px;background:#1e1e1e;border-color:#333;color:#fff"
+                         data-centavos="{{ valor|floatformat:2 }}"
+                         id="in_{{ cod }}">
+
+                  <button type="button" class="btn btn-sm btn-outline-secondary px-2 btn-inc"
+                    data-target="in_{{ cod }}">+</button>
+                </div>
+              </td>
+              <td class="text-end pe-3 fw-bold" style="color:var(--verm)" id="sub_{{ cod }}">R$ 0,00</td>
+            </tr>
+            {% endif %}{% endfor %}
+          </tbody>
+        </table>
       </div>
     </div>
 
-    <!-- Modo DETALHADO -->
-    <div id="painelDetalhado" style="display:none">
-      <div class="card mb-3">
-        <div class="card-header"><i class="bi bi-cash me-2" style="color:var(--verm)"></i><strong>Notas</strong></div>
-        <div class="card-body p-0">
-          <table class="table table-hover mb-0" style="table-layout:fixed">
-            <thead>
-              <tr>
-                <th style="width:40%">Denominação</th>
-                <th style="width:30%" class="text-center">Quantidade</th>
-                <th style="width:30%" class="text-end pe-3">Subtotal</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for cod, label, valor in denominacoes %}{% if 'nota' in cod %}
-              <tr>
-                <td><span class="fw-medium text-white">{{ label }}</span></td>
-                <td>
-                  <div class="d-flex align-items-center justify-content-center gap-1">
-                    <button type="button" class="btn btn-sm btn-outline-secondary px-2 btn-dec" data-target="in_{{ cod }}">−</button>
-                    <input type="number" name="qtd_{{ cod }}" value="{{ abertura_qtd|get_default:cod }}" min="0"
-                           class="form-control form-control-sm text-center denom-qtd"
-                           style="width:64px;background:#1e1e1e;border-color:#333;color:#fff"
-                           data-centavos="{{ valor|floatformat:2 }}" id="in_{{ cod }}">
-                    <button type="button" class="btn btn-sm btn-outline-secondary px-2 btn-inc" data-target="in_{{ cod }}">+</button>
-                  </div>
-                </td>
-                <td class="text-end pe-3 fw-bold" style="color:var(--verm)" id="sub_{{ cod }}">R$ 0,00</td>
-              </tr>
-              {% endif %}{% endfor %}
-            </tbody>
-          </table>
-        </div>
+    <!-- MOEDAS -->
+    <div class="card mb-3">
+      <div class="card-header">
+        <i class="bi bi-coin me-2" style="color:#ffa500"></i><strong>Moedas</strong>
       </div>
-      <div class="card mb-3">
-        <div class="card-header"><i class="bi bi-coin me-2" style="color:#ffa500"></i><strong>Moedas</strong></div>
-        <div class="card-body p-0">
-          <table class="table table-hover mb-0" style="table-layout:fixed">
-            <thead>
-              <tr>
-                <th style="width:40%">Denominação</th>
-                <th style="width:30%" class="text-center">Quantidade</th>
-                <th style="width:30%" class="text-end pe-3">Subtotal</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for cod, label, valor in denominacoes %}{% if 'moeda' in cod %}
-              <tr>
-                <td><span class="fw-medium text-white">{{ label }}</span></td>
-                <td>
-                  <div class="d-flex align-items-center justify-content-center gap-1">
-                    <button type="button" class="btn btn-sm btn-outline-secondary px-2 btn-dec" data-target="in_{{ cod }}">−</button>
-                    <input type="number" name="qtd_{{ cod }}" value="0" min="0"
-                           class="form-control form-control-sm text-center denom-qtd"
-                           style="width:64px;background:#1e1e1e;border-color:#333;color:#fff"
-                           data-centavos="{{ valor|floatformat:2 }}" id="in_{{ cod }}">
-                    <button type="button" class="btn btn-sm btn-outline-secondary px-2 btn-inc" data-target="in_{{ cod }}">+</button>
-                  </div>
-                </td>
-                <td class="text-end pe-3 fw-bold" style="color:#ffa500" id="sub_{{ cod }}">R$ 0,00</td>
-              </tr>
-              {% endif %}{% endfor %}
-            </tbody>
-          </table>
-        </div>
+
+      <div class="card-body p-0">
+        <table class="table table-hover mb-0" style="table-layout:fixed">
+          <thead>
+            <tr>
+              <th style="width:40%">Denominação</th>
+              <th style="width:30%" class="text-center">Quantidade</th>
+              <th style="width:30%" class="text-end pe-3">Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for cod, label, valor in denominacoes %}{% if 'moeda' in cod %}
+            <tr>
+              <td><span class="fw-medium text-white">{{ label }}</span></td>
+              <td>
+                <div class="d-flex align-items-center justify-content-center gap-1">
+                  <button type="button" class="btn btn-sm btn-outline-secondary px-2 btn-dec"
+                    data-target="in_{{ cod }}">−</button>
+
+                  <input type="number" name="qtd_{{ cod }}" value="0" min="0"
+                         class="form-control form-control-sm text-center denom-qtd qtd-field"
+                         style="width:64px;background:#1e1e1e;border-color:#333;color:#fff"
+                         data-centavos="{{ valor|floatformat:2 }}"
+                         id="in_{{ cod }}">
+
+                  <button type="button" class="btn btn-sm btn-outline-secondary px-2 btn-inc"
+                    data-target="in_{{ cod }}">+</button>
+                </div>
+              </td>
+              <td class="text-end pe-3 fw-bold" style="color:#ffa500" id="sub_{{ cod }}">R$ 0,00</td>
+            </tr>
+            {% endif %}{% endfor %}
+          </tbody>
+        </table>
       </div>
-      <div class="card mb-4" style="border-color:var(--verm);background:rgba(232,57,14,.06)">
-        <div class="card-body d-flex justify-content-between align-items-center py-3">
-          <span class="fs-5 fw-bold text-white"><i class="bi bi-calculator me-2"></i>Total Contado</span>
-          <span class="fw-bold" style="font-size:2rem;color:var(--verm)" id="totalGeral">R$ 0,00</span>
-        </div>
+    </div>
+
+    <!-- TOTAL -->
+    <div class="card mb-4" style="border-color:var(--verm);background:rgba(232,57,14,.06)">
+      <div class="card-body d-flex justify-content-between align-items-center py-3">
+        <span class="fs-5 fw-bold text-white">
+          <i class="bi bi-calculator me-2"></i>Total Contado
+        </span>
+        <span class="fw-bold" style="font-size:2rem;color:var(--verm)" id="totalGeral">R$ 0,00</span>
       </div>
     </div>
 
     <button type="submit" class="btn btn-danger btn-lg w-100 py-3 fw-bold"
-            onclick="return confirm('Confirmar fechamento de caixa?')">
+      onclick="return confirm('Confirmar fechamento de caixa?')">
       <i class="bi bi-lock me-2"></i>Fechar Caixa
     </button>
+
   </form>
 </div>
 
 <script>
-var abertura = {{ caixa.total_abertura|floatformat:2 }};
-function setModo(modo) {
-  document.getElementById('modoInput').value = modo;
-  document.getElementById('painelSimples').style.display = modo === 'simples' ? '' : 'none';
-  document.getElementById('painelDetalhado').style.display = modo === 'detalhado' ? '' : 'none';
-  document.getElementById('tab-simples').classList.toggle('active', modo === 'simples');
-  document.getElementById('tab-detalhado').classList.toggle('active', modo === 'detalhado');
+function parseCentavos(v) {
+  return parseFloat(String(v).replace(",", ".")) || 0;
 }
-function fmt(v) { return 'R$ ' + v.toFixed(2).replace('.', ','); }
-function atualizarDiff() {
-  const final = parseFloat(document.getElementById('valorFinalInput').value) || 0;
-  const diff = final - abertura;
-  const el = document.getElementById('diffSimples');
-  if (el) {
-    const cor = diff >= 0 ? '#5cb85c' : '#e8390e';
-    const sinal = diff >= 0 ? '+' : '';
-    el.style.color = cor;
-    el.textContent = 'Diferença: ' + sinal + fmt(diff) + ' em relação à abertura';
-  }
+function fmt(v) {
+  return 'R$ ' + v.toFixed(2).replace('.', ',');
 }
 function recalc() {
   let total = 0;
-  document.querySelectorAll('.denom-qtd').forEach(function(inp) {
+  document.querySelectorAll('.denom-qtd').forEach(inp => {
     const qtd = parseInt(inp.value) || 0;
-    const val = parseFloat(String(inp.dataset.centavos || '0').replace(',', '.')) || 0;
+    const val = parseCentavos(inp.dataset.centavos);
     const sub = qtd * val;
     total += sub;
-    const cod = inp.id.replace('in_', '');
-    const el = document.getElementById('sub_' + cod);
-    if (el) el.textContent = fmt(sub);
+    const cod = inp.id.replace("in_", "");
+    document.getElementById("sub_" + cod).textContent = fmt(sub);
   });
-  const tg = document.getElementById('totalGeral');
-  if (tg) tg.textContent = fmt(total);
+  document.getElementById("totalGeral").textContent = fmt(total);
 }
-document.querySelectorAll('.denom-qtd').forEach(inp => inp.addEventListener('input', recalc));
-document.querySelectorAll('.btn-inc').forEach(btn => btn.addEventListener('click', function() {
-  const inp = document.getElementById(btn.dataset.target);
-  inp.value = (parseInt(inp.value) || 0) + 1; recalc();
-}));
-document.querySelectorAll('.btn-dec').forEach(btn => btn.addEventListener('click', function() {
-  const inp = document.getElementById(btn.dataset.target);
-  inp.value = Math.max(0, (parseInt(inp.value) || 0) - 1); recalc();
-}));
+
+// Eventos
+document.querySelectorAll('.btn-inc').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const inp = document.getElementById(btn.dataset.target);
+    inp.value = (parseInt(inp.value) || 0) + 1;
+    recalc();
+  });
+});
+document.querySelectorAll('.btn-dec').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const inp = document.getElementById(btn.dataset.target);
+    inp.value = Math.max(0, (parseInt(inp.value) || 0) - 1);
+    recalc();
+  });
+});
+document.querySelectorAll('.denom-qtd').forEach(inp => {
+  inp.addEventListener('input', recalc);
+});
+
+// Foca no primeiro campo
+const campos = Array.from(document.querySelectorAll('.qtd-field'));
+if (campos.length) {
+  campos[0].focus();
+  campos[0].select();
+}
+
+// Tab navega automaticamente
+campos.forEach((inp, i) => {
+  inp.addEventListener('keydown', e => {
+    if (e.key === "Enter" || (e.key === "Tab" && !e.shiftKey)) {
+      e.preventDefault();
+      const next = campos[i + 1];
+      if (next) { next.focus(); next.select(); }
+      else document.querySelector('button[type="submit"]').focus();
+    }
+  });
+});
+
 recalc();
-atualizarDiff();
 </script>
 {% endblock %}

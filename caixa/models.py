@@ -42,7 +42,7 @@ DENOMINACOES = [
     ('moeda_25', 'Moeda R$ 0,25', 0.25),
     ('moeda_10', 'Moeda R$ 0,10', 0.10),
     ('moeda_5', 'Moeda R$ 0,05', 0.05),
-    ('moeda_1', 'Moeda R$ 0,01', 0.01),
+    # ('moeda_1', 'Moeda R$ 0,01', 0.01),
 ]
 
 DENOMINACAO_CHOICES = [(d[0], d[1]) for d in DENOMINACOES]

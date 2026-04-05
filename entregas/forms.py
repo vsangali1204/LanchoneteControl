@@ -1,5 +1,6 @@
 from django import forms
-from .models import Despacho, Entrega, Motoboy, Rota, Retirada
+from django.forms import inlineformset_factory
+from .models import Despacho, Entrega, PagamentoEntrega, Motoboy, Rota, Retirada
 
 DARK_INPUT = 'form-control bg-dark text-light border-secondary'
 DARK_SELECT = 'form-select bg-dark text-light border-secondary'
@@ -39,23 +40,46 @@ class DespachoForm(forms.ModelForm):
 
 
 class EntregaRetornoForm(forms.ModelForm):
+    """Form principal da entrega — rota + obs. Pagamentos vêm via PagamentoFormSet."""
     class Meta:
         model = Entrega
-        fields = ['rota', 'forma_pagamento', 'valor', 'observacoes']
+        fields = ['rota', 'observacoes']
         widgets = {
             'rota': forms.Select(attrs={'class': DARK_SELECT, 'id': 'id_rota_entrega'}),
-            'forma_pagamento': forms.Select(attrs={'class': DARK_SELECT, 'id': 'id_forma_pgto'}),
-            'valor': forms.NumberInput(attrs={'class': DARK_INPUT, 'step': '0.01', 'min': '0', 'placeholder': '0,00'}),
             'observacoes': forms.TextInput(attrs={'class': DARK_INPUT, 'placeholder': 'Opcional'}),
-        }
-        labels = {
-            'valor': 'Valor Pago pelo Cliente (R$)',
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['rota'].queryset = Rota.objects.filter(ativa=True)
-        self.fields['valor'].required = True
+
+
+class PagamentoEntregaForm(forms.ModelForm):
+    class Meta:
+        model = PagamentoEntrega
+        fields = ['forma_pagamento', 'valor']
+        widgets = {
+            'forma_pagamento': forms.Select(attrs={
+                'class': DARK_SELECT + ' pagamento-forma',
+            }),
+            'valor': forms.NumberInput(attrs={
+                'class': DARK_INPUT + ' pagamento-valor',
+                'step': '0.01', 'min': '0', 'placeholder': '0,00',
+            }),
+        }
+
+
+# Formset inline: mínimo 1 pagamento por entrega, máximo 4 (uma por forma)
+PagamentoFormSet = inlineformset_factory(
+    Entrega,
+    PagamentoEntrega,
+    form=PagamentoEntregaForm,
+    extra=1,
+    min_num=1,
+    validate_min=True,
+    can_delete=True,
+)
+
 
 class MotoboyForm(forms.ModelForm):
     class Meta:
@@ -87,20 +111,18 @@ class DespachoEditForm(forms.ModelForm):
 
 
 class EntregaEditForm(forms.ModelForm):
+    """Form de edição da entrega — rota + obs. Pagamentos editados via formset inline."""
     class Meta:
         model = Entrega
-        fields = ['rota', 'forma_pagamento', 'valor', 'observacoes']
+        fields = ['rota', 'observacoes']
         widgets = {
-            'rota': forms.Select(attrs={'class': DARK_SELECT}),
-            'forma_pagamento': forms.Select(attrs={'class': DARK_SELECT}),
-            'valor': forms.NumberInput(attrs={'class': DARK_INPUT, 'step': '0.01', 'min': '0'}),
+            'rota': forms.Select(attrs={'class': DARK_SELECT, 'id': 'id_rota_entrega'}),
             'observacoes': forms.TextInput(attrs={'class': DARK_INPUT, 'placeholder': 'Opcional'}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['rota'].queryset = Rota.objects.filter(ativa=True)
-        self.fields['valor'].required = True
 
 
 class RetiradaForm(forms.ModelForm):

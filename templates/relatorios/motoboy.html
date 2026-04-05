@@ -3,163 +3,181 @@
 {% block content %}
 
 <style>
+
 @media screen {
     .bobina-wrapper {
         display: flex;
         flex-wrap: wrap;
-        gap: 24px;
+        gap: 28px;
         justify-content: center;
         padding: 20px;
     }
-    .bobina-container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 8px;
-    }
     .bobina {
-        width: 302px;
-        background: #fff;
+        width: 320px;
+        background: #ffffff;
         color: #000;
-        font-family: 'Courier New', Courier, monospace;
-        font-size: 12px;
-        line-height: 1.6;
-        padding: 12px 10px;
-        border-radius: 4px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+        font-family: 'Courier New', monospace;
+        font-size: 13px;
+        line-height: 1.55;
+        padding: 14px 12px;
+        border-radius: 6px;
+        box-shadow: 0 3px 18px rgba(0,0,0,0.35);
+        border: 1px solid #e0e0e0;
     }
     .btn-imprimir-individual {
-        width: 302px;
+        width: 320px;
     }
 }
 
+/* ---------- IMPRESSÃO EM BOBINA 80MM ---------- */
 @media print {
-    body * { visibility: hidden !important; }
-    .imprimindo, .imprimindo * { visibility: visible !important; }
-    .imprimindo {
-        position: fixed !important;
-        top: 0 !important;
-        left: 0 !important;
-        width: 76mm !important;
+    @page {
+        size: 80mm auto;
         margin: 0 !important;
-        padding: 4mm 3mm !important;
+    }
+    html, body {
+        margin: 0 !important;
+        padding: 0 !important;
+        height: auto !important;
+        overflow: visible !important;
+    }
+    .navbar-custom,
+    .no-print,
+    .btn-imprimir-individual,
+    .bobina {
+        display: none !important;
+    }
+    .bobina-wrapper,
+    .bobina-container {
+        display: block !important;
+        visibility: visible !important;
+    }
+    .bobina.imprimindo {
+        display: block !important;
+        width: 76mm !important;
+        padding: 3mm 2.5mm !important;
         background: #fff !important;
         color: #000 !important;
-        font-family: 'Courier New', Courier, monospace !important;
-        font-size: 10.5pt !important;
-        line-height: 1.55 !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
+        font-family: 'Courier New', monospace !important;
+        font-size: 15px !important;
+        font-weight: 700 !important;
+        line-height: 1.6 !important;
         box-shadow: none !important;
         border-radius: 0 !important;
+        border: none !important;
     }
-    /* Garante que tudo preto puro na impressão */
-    .imprimindo .b-titulo,
-    .imprimindo .b-sub,
-    .imprimindo .b-secao-titulo,
-    .imprimindo .b-nome-motoboy,
-    .imprimindo .b-row,
-    .imprimindo .b-row-indent,
-    .imprimindo .b-total,
-    .imprimindo .b-rodape {
+    .bobina.imprimindo .b-row,
+    .bobina.imprimindo .b-row-indent,
+    .bobina.imprimindo .b-secao-titulo,
+    .bobina.imprimindo .b-sub,
+    .bobina.imprimindo .b-rodape,
+    .bobina.imprimindo span {
+        font-size: 15px !important;
+        font-weight: 700 !important;
         color: #000 !important;
     }
-    .imprimindo .b-row-indent {
-        color: #222 !important;
+    .bobina.imprimindo .b-titulo {
+        font-size: 18px !important;
+        font-weight: 900 !important;
     }
-    .imprimindo .b-rodape {
-        color: #444 !important;
-    }
-    .imprimindo hr,
-    .imprimindo .b-secao,
-    .imprimindo .b-total {
-        border-color: #000 !important;
+    .bobina.imprimindo .b-total .b-row {
+        font-size: 18px !important;
+        font-weight: 900 !important;
     }
 }
 
-/* ── Estrutura da bobina (tela + impressão) ───────────── */
+/* ---------- ESTILO GERAL ---------- */
+.b-row-indent {
+    color: #000 !important;
+}
+.b-rodape {
+    color: #000 !important;
+}
+/* ---------- ESTILO GERAL ---------- */
+
 .b-titulo {
     text-align: center;
-    font-weight: bold;
-    font-size: 14px;
-    letter-spacing: 1px;
-    padding-bottom: 5px;
+    font-weight: 800;
+    font-size: 15px;
+    padding-bottom: 4px;
     border-bottom: 2px solid #000;
-    margin-bottom: 5px;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
 }
+
 .b-sub {
     text-align: center;
-    font-size: 10px;
-    padding-bottom: 5px;
-    border-bottom: 1px dashed #000;
-    margin-bottom: 7px;
-    color: #222;
-    line-height: 1.5;
-}
-.b-secao {
-    padding-bottom: 6px;
-    border-bottom: 1px dashed #000;
-    margin-bottom: 6px;
-}
-.b-secao-titulo {
-    font-weight: bold;
     font-size: 11px;
-    margin-bottom: 4px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: #000;
+    padding: 4px 0;
+    margin-bottom: 8px;
+    border-bottom: 1px dashed #000;
 }
+
+.b-nome-motoboy {
+    text-align: center;
+    font-size: 20px;
+    font-weight: bold;
+    padding-bottom: 4px;
+    margin-bottom: 6px;
+    border-bottom: 1px solid #000;
+}
+
+.b-secao {
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px dashed #000;
+}
+
+.b-secao-titulo {
+    font-size: 11.5px;
+    font-weight: bold;
+    margin-bottom: 4px;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+}
+
 .b-row {
     display: flex;
     justify-content: space-between;
-    font-size: 11px;
+    font-size: 11.5px;
     margin-bottom: 2px;
-    color: #000;
 }
+
 .b-row-indent {
     display: flex;
     justify-content: space-between;
-    font-size: 10px;
-    padding-left: 10px;
-    color: #222;
+    margin-left: 12px;
+    font-size: 10.5px;
     margin-bottom: 2px;
+    color: #333;
 }
+
 .b-total {
     border-top: 2px solid #000;
     border-bottom: 2px solid #000;
-    padding: 5px 0;
+    padding: 6px 0;
     margin-top: 6px;
 }
+
 .b-total .b-row {
+    font-size: 14px;
     font-weight: bold;
-    font-size: 13px;
-    color: #000;
 }
+
 .b-rodape {
     text-align: center;
-    font-size: 9px;
+    font-size: 9.5px;
     color: #444;
-    margin-top: 7px;
-    padding-top: 5px;
+    padding-top: 6px;
     border-top: 1px dashed #000;
-}
-.b-nome-motoboy {
-    text-align: center;
-    font-weight: bold;
-    font-size: 13px;
-    margin-bottom: 5px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: #000;
-    border-bottom: 1px solid #000;
-    padding-bottom: 4px;
+    margin-top: 10px;
 }
 </style>
 
 <div class="container-fluid py-4">
 
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <!-- Header — oculto na impressão -->
+    <div class="no-print d-flex justify-content-between align-items-center mb-4">
         <div>
             <h1 style="color:#fff;font-weight:700;font-size:1.4rem;margin:0">
                 <i class="bi bi-receipt me-2" style="color:var(--verm)"></i>Relatório por Motoboy
@@ -170,8 +188,8 @@
         </div>
     </div>
 
-    <!-- Filtros -->
-    <div class="card mb-4">
+    <!-- Filtros — ocultos na impressão -->
+    <div class="no-print card mb-4">
         <div class="card-body py-2">
             <form method="get" class="row g-2 align-items-end">
                 <div class="col-6 col-md-3">
@@ -207,15 +225,17 @@
 
     {% if resumo %}
     <div class="bobina-wrapper">
+
         {% for r in resumo %}
         <div class="bobina-container">
 
             <!-- Bobina -->
             <div class="bobina" id="bobina_{{ forloop.counter }}">
 
-                <div class="b-titulo">*** LANCHONETE ***</div>
+                <div class="b-titulo">PREDILETA HAMBURGUERIA</div>
+
                 <div class="b-sub">
-                    RELATORIO DE MOTOBOY<br>
+                    RELATÓRIO DE ENTREGAS<br>
                     {% if data_inicio == data_fim %}
                         {{ data_inicio|slice:"8:10" }}/{{ data_inicio|slice:"5:7" }}/{{ data_inicio|slice:"0:4" }}
                     {% else %}
@@ -227,10 +247,12 @@
 
                 <div class="b-secao">
                     <div class="b-nome-motoboy">{{ r.motoboy.nome }}</div>
+
                     <div class="b-row">
                         <span>Viagens realizadas:</span>
                         <span><b>{{ r.viagens }}</b></span>
                     </div>
+
                     <div class="b-row">
                         <span>Total de entregas:</span>
                         <span><b>{{ r.entregas }}</b></span>
@@ -242,10 +264,10 @@
                     {% for nome_rota, dados in r.rotas.items %}
                     <div class="b-row">
                         <span>{{ nome_rota }}</span>
-                        <span>{{ dados.qtd }}x</span>
+                        <span>Qtd Entregas: {{ dados.qtd }}x</span>
                     </div>
                     <div class="b-row-indent">
-                        <span>Taxa R$ {{ dados.taxa|floatformat:2 }} un.</span>
+                        <span>Taxa R$ {{ dados.taxa|floatformat:2 }}</span>
                         <span>R$ {{ dados.total|floatformat:2 }}</span>
                     </div>
                     {% endfor %}
@@ -275,35 +297,18 @@
                 </div>
 
             </div>
-            <!-- fim bobina -->
 
-            <!-- Botões: imprimir + WhatsApp -->
-            <div class="d-flex gap-2 btn-imprimir-individual" style="width:302px">
-              <button class="btn btn-sm btn-outline-secondary flex-grow-1"
-                      onclick="imprimirBobina('bobina_{{ forloop.counter }}')">
-                <i class="bi bi-printer me-1"></i>Imprimir
-              </button>
-              {% comment %} <button class="btn btn-sm btn-whatsapp flex-grow-1"
-                      style="background:#25d366;color:#fff;border:none"
-                      onclick="enviarWhatsapp('{{ r.motoboy.pk }}', this)">
-                <i class="bi bi-whatsapp me-1"></i>WhatsApp
-              </button> {% endcomment %}
+            <!-- Botões — ocultos na impressão -->
+            <div class="d-flex gap-2 btn-imprimir-individual">
+                <button class="btn btn-sm btn-outline-secondary flex-grow-1"
+                        onclick="imprimirBobina('bobina_{{ forloop.counter }}')">
+                    <i class="bi bi-printer me-1"></i>Imprimir
+                </button>
             </div>
-
-            <!-- Painel de resultado do envio -->
-            <div class="resultado-envio" id="res_{{ r.motoboy.pk }}"
-                 style="display:none;width:302px;font-size:.8rem;margin-top:4px"></div>
 
         </div>
         {% endfor %}
-    </div>
 
-    {% else %}
-    <div class="card" style="max-width:460px;margin:0 auto">
-        <div class="card-body text-center py-5" style="color:var(--muted)">
-            <i class="bi bi-search fs-1 d-block mb-3"></i>
-            <p class="mb-0">Selecione o período e clique em <strong>Gerar Relatório</strong></p>
-        </div>
     </div>
     {% endif %}
 
@@ -311,72 +316,18 @@
 
 <script>
 function imprimirBobina(id) {
-    document.querySelectorAll('.imprimindo').forEach(function(el) {
-        el.classList.remove('imprimindo');
-    });
-    document.getElementById(id).classList.add('imprimindo');
-    window.print();
-    setTimeout(function() {
-        document.getElementById(id).classList.remove('imprimindo');
-    }, 1000);
-}
+    document.querySelectorAll(".bobina").forEach(b => b.classList.remove("imprimindo"));
 
-function getCookie(name) {
-    var v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
-    return v ? v[2] : null;
-}
+    let alvo = document.getElementById(id);
+    alvo.classList.add("imprimindo");
 
-function enviarWhatsapp(motoboyId, btn) {
-    var dataInicio = document.querySelector('[name="data_inicio"]').value;
-    var dataFim    = document.querySelector('[name="data_fim"]').value;
-    var resEl = document.getElementById('res_' + motoboyId);
+    setTimeout(() => {
+        window.print();
+    }, 50);
 
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Enviando…';
-    resEl.style.display = 'none';
-
-    var formData = new FormData();
-    formData.append('motoboy_id', motoboyId);
-    formData.append('data_inicio', dataInicio);
-    formData.append('data_fim', dataFim);
-    formData.append('csrfmiddlewaretoken', getCookie('csrftoken'));
-
-    fetch('{% url "mensagens:enviar_motoboy" %}', {
-        method: 'POST',
-        body: formData,
-    })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="bi bi-whatsapp me-1"></i>WhatsApp';
-
-        var cor = data.ok ? '#1a4d1a' : '#4d1a1a';
-        var borda = data.ok ? '#25d366' : '#e8390e';
-        var icone = data.ok ? '✅' : '❌';
-
-        var html = '<div style="background:' + cor + ';border:1px solid ' + borda + ';border-radius:6px;padding:8px 10px">';
-        html += '<div style="font-weight:bold;margin-bottom:4px">' + icone + ' ' + (data.ok ? 'Enviado!' : 'Erro') + '</div>';
-
-        if (data.erro) {
-            html += '<div style="color:#e07070">' + data.erro + '</div>';
-        } else {
-            html += '<div style="color:#aaa">Enviado para ' + data.enviados + '/' + data.total + ' contato(s)</div>';
-            (data.resultados || []).forEach(function(r) {
-                var status = r.ok ? '✓' : '✗';
-                var cor2   = r.ok ? '#5cb85c' : '#e07070';
-                html += '<div style="color:' + cor2 + ';margin-top:2px">' + status + ' ' + r.contato + ' (' + r.numero + ')</div>';
-            });
-        }
-        html += '</div>';
-        resEl.innerHTML = html;
-        resEl.style.display = 'block';
-    })
-    .catch(function(err) {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="bi bi-whatsapp me-1"></i>WhatsApp';
-        resEl.innerHTML = '<div style="color:#e07070;background:#1f1010;border:1px solid #4d1a1a;border-radius:6px;padding:8px">Erro de comunicação: ' + err + '</div>';
-        resEl.style.display = 'block';
-    });
+    setTimeout(() => {
+        alvo.classList.remove("imprimindo");
+    }, 500);
 }
 </script>
 

@@ -19,12 +19,14 @@
         {% if despacho.data_retorno %}· Retornou {{ despacho.data_retorno|date:'H:i' }}{% endif %}
       </span>
     </div>
-    <a href="{% url 'entregas:despacho_editar' despacho.pk %}" class="btn btn-sm btn-outline-warning" title="Editar despacho">
+    <a href="{% url 'entregas:despacho_editar' despacho.pk %}" class="btn btn-sm btn-outline-warning"
+      title="Editar despacho">
       <i class="bi bi-pencil"></i>
     </a>
     <!-- Progresso inline -->
     <div class="text-end">
-      <span class="fw-bold {% if despacho.pode_finalizar %}text-success{% else %}text-warning{% endif %}" style="font-size:1.4rem">
+      <span class="fw-bold {% if despacho.pode_finalizar %}text-success{% else %}text-warning{% endif %}"
+        style="font-size:1.4rem">
         {{ despacho.qtd_lancada }}/{{ despacho.qtd_saida }}
       </span>
       <div style="font-size:.75rem;color:var(--muted)">
@@ -36,8 +38,9 @@
   <!-- Barra de progresso slim -->
   <div class="prog-bar-bg mb-3" style="height:8px;border-radius:4px">
     {% if despacho.qtd_saida %}
-      <div class="prog-bar-fill {% if despacho.pode_finalizar %}ok{% endif %}"
-           style="width:{% widthratio despacho.qtd_lancada despacho.qtd_saida 100 %}%;height:8px;border-radius:4px;transition:width .3s"></div>
+    <div class="prog-bar-fill {% if despacho.pode_finalizar %}ok{% endif %}"
+      style="width:{% widthratio despacho.qtd_lancada despacho.qtd_saida 100 %}%;height:8px;border-radius:4px;transition:width .3s">
+    </div>
     {% endif %}
   </div>
 
@@ -58,7 +61,7 @@
             <form method="post" id="formEntrega" autocomplete="off">
               {% csrf_token %}
 
-              <!-- Rota + taxa em linha -->
+              <!-- Rota -->
               <div class="mb-2">
                 <label class="form-label mb-1" style="font-size:.85rem">Rota</label>
                 {{ form.rota }}
@@ -67,25 +70,51 @@
                 </div>
               </div>
 
-              <!-- Forma de pagamento -->
-              <div class="mb-2">
-                <label class="form-label mb-1" style="font-size:.85rem">Pagamento</label>
-                {{ form.forma_pagamento }}
-              </div>
-
-              <!-- Valor + botões rápidos -->
-              <div class="mb-2">
-                <label class="form-label mb-1" style="font-size:.85rem">Valor (R$)</label>
-                {{ form.valor }}
-                <!-- Atalhos de valores -->
-                <div class="d-flex gap-1 flex-wrap mt-1" id="atalhoValores">
-                  {% for v in "20,30,40,50,60,80,100"|split:"," %}
-                  <button type="button" class="btn btn-sm btn-outline-secondary px-2 py-0"
-                          style="font-size:.78rem" onclick="setValor({{ v }})">{{ v }}</button>
-                  {% endfor %}
+              <!-- Pagamentos (formset inline) -->
+              {{ pagamento_fs.management_form }}
+              <div id="pagamentos-container">
+                {% for pf in pagamento_fs %}
+                <div class="pagamento-row d-flex gap-2 mb-2 align-items-end
+                  {% if pf.DELETE.value %}d-none{% endif %}" {% if pf.DELETE.value %}style="display:none!important" {% endif %}>
+                  {{ pf.id }}
+                  <div style="flex:1">
+                    {% if forloop.first %}
+                    <label class="form-label mb-1" style="font-size:.85rem">Pagamento</label>
+                    {% endif %}
+                    {{ pf.forma_pagamento }}
+                  </div>
+                  <div style="flex:1">
+                    {% if forloop.first %}
+                    <label class="form-label mb-1" style="font-size:.85rem">Valor (R$)</label>
+                    {% endif %}
+                    {{ pf.valor }}
+                  </div>
+                  <div style="padding-bottom:2px">
+                    <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2 btn-remover-pgto"
+                      title="Remover pagamento">
+                      <i class="bi bi-x" style="font-size:.9rem"></i>
+                    </button>
+                    {# campo DELETE oculto — ativado pelo JS ao remover linha #}
+                    <div style="display:none">{{ pf.DELETE }}</div>
+                  </div>
                 </div>
+                {% endfor %}
               </div>
 
+              <!-- Botão adicionar forma -->
+              <button type="button" id="btn-add-pgto" class="btn btn-sm btn-outline-secondary w-100 mb-2">
+                <i class="bi bi-plus me-1"></i>+ Outra forma de pagamento
+              </button>
+
+              <!-- Atalhos de valor -->
+              <div class="d-flex gap-1 flex-wrap mb-2" id="atalhoValores">
+                {% for v in "20,30,40,50,60,80,100"|split:"," %}
+                <button type="button" class="btn btn-sm btn-outline-secondary px-2 py-0" style="font-size:.78rem"
+                  onclick="setValor({{ v }})">{{ v }}</button>
+                {% endfor %}
+              </div>
+
+              <!-- Obs -->
               <div class="mb-3">
                 <label class="form-label mb-1" style="font-size:.85rem">Obs.</label>
                 {{ form.observacoes }}
@@ -102,7 +131,8 @@
           <div class="card-body text-center py-4">
             <i class="bi bi-check-circle-fill text-success" style="font-size:3rem"></i>
             <p class="fw-bold text-white mt-2 mb-1">Todas lançadas!</p>
-            <p style="color:var(--muted);font-size:.84rem">{{ despacho.qtd_lancada }} de {{ despacho.qtd_saida }} confirmadas.</p>
+            <p style="color:var(--muted);font-size:.84rem">{{ despacho.qtd_lancada }} de {{ despacho.qtd_saida }}
+              confirmadas.</p>
           </div>
         </div>
         {% endif %}
@@ -125,14 +155,14 @@
         <form method="post" class="mt-2">
           {% csrf_token %}
           {% if despacho.pode_finalizar %}
-            <button type="submit" name="finalizar" class="btn btn-success btn-lg w-100 fw-bold"
-                    onclick="return confirm('Finalizar despacho?')">
-              <i class="bi bi-check-circle-fill me-1"></i>Finalizar Despacho
-            </button>
+          <button type="submit" name="finalizar" class="btn btn-success btn-lg w-100 fw-bold"
+            onclick="return confirm('Finalizar despacho?')">
+            <i class="bi bi-check-circle-fill me-1"></i>Finalizar Despacho
+          </button>
           {% else %}
-            <button type="button" class="btn btn-outline-secondary w-100 fw-bold" disabled>
-              <i class="bi bi-lock me-1"></i>Faltam {{ despacho.faltam }} entrega(s)
-            </button>
+          <button type="button" class="btn btn-outline-secondary w-100 fw-bold" disabled>
+            <i class="bi bi-lock me-1"></i>Faltam {{ despacho.faltam }} entrega(s)
+          </button>
           {% endif %}
         </form>
 
@@ -150,27 +180,41 @@
         </div>
         <div class="card-body p-0">
           {% for e in entregas %}
-          <div class="e-item e-{{ e.forma_pagamento }} d-flex align-items-center gap-2 px-3 py-2"
-               style="border-bottom:1px solid #1a1a1a">
+          <div class="e-item d-flex align-items-center gap-2 px-3 py-2" style="border-bottom:1px solid #1a1a1a">
             <div class="fw-bold text-white" style="min-width:22px;text-align:center;font-size:.9rem">
               {{ forloop.counter }}
             </div>
             <div class="flex-grow-1">
               <div class="fw-medium text-white" style="font-size:.9rem">{{ e.rota.nome }}</div>
               <div style="font-size:.78rem;color:var(--muted)">
-                {% if e.forma_pagamento == 'dinheiro' %}
-                  <span style="color:#5cb85c"><i class="bi bi-cash me-1"></i>Dinheiro</span>
-                {% elif e.forma_pagamento == 'cartao' %}
-                  <span style="color:#4da6ff"><i class="bi bi-credit-card me-1"></i>Cartão</span>
-                {% elif e.forma_pagamento == 'pix' %}
-                  <span style="color:#2898a7"><i class="bi bi-pix me-1"></i>Pix</span>
+                {# Itera sobre todos os pagamentos da entrega #}
+                {% for p in e.pagamentos.all %}
+                {% if p.forma_pagamento == 'dinheiro' %}
+                <span style="color:#5cb85c"><i class="bi bi-cash me-1"></i>Dinheiro</span>
+                {% elif p.forma_pagamento == 'cartao' %}
+                <span style="color:#4da6ff"><i class="bi bi-credit-card me-1"></i>Cartão</span>
+                {% elif p.forma_pagamento == 'pix' %}
+                <span style="color:#2898a7"><i class="bi bi-pix me-1"></i>Pix</span>
+                {% elif p.forma_pagamento == 'online' %}
+                <span style="color:#9d6fe8"><i class="bi bi-phone me-2"></i>Online</span>
                 {% else %}
-                  <span style="color:#9d6fe8"><i class="bi bi-phone me-1"></i>Online</span>
+                <span style="color:#6e8feb"><i class="bi bi-phone me-2"></i>Yooga</span>
                 {% endif %}
-                <span class="ms-1 fw-bold text-white">R$ {{ e.valor|floatformat:2 }}</span>
+                <span class="fw-bold text-white">R$ {{ p.valor|floatformat:2 }}</span>
+                {% if not forloop.last %}
+                <span style="color:#555"> + </span>
+                {% endif %}
+                {% endfor %}
                 <span class="ms-1" style="color:#555">· taxa R$ {{ e.rota.taxa_entrega|floatformat:2 }}</span>
                 {% if e.observacoes %}<span class="ms-1" style="color:#666">· {{ e.observacoes }}</span>{% endif %}
               </div>
+              {# Total da entrega se tiver pagamento parcial (mais de 1 pagamento) #}
+              {% if e.pagamentos.count > 1 %}
+              <div style="font-size:.78rem;margin-top:2px">
+                <span style="color:var(--muted)">Total: </span>
+                <span class="fw-bold text-white">R$ {{ e.valor_total|floatformat:2 }}</span>
+              </div>
+              {% endif %}
             </div>
             <div class="d-flex gap-1 flex-shrink-0">
               <a href="{% url 'entregas:entrega_editar' e.pk %}" class="btn btn-sm btn-outline-warning py-0 px-2">
@@ -180,7 +224,7 @@
                 {% csrf_token %}
                 <input type="hidden" name="entrega_id" value="{{ e.pk }}">
                 <button type="submit" name="remover_entrega" class="btn btn-sm btn-outline-danger py-0 px-2"
-                        onclick="return confirm('Remover?')">
+                  onclick="return confirm('Remover?')">
                   <i class="bi bi-trash3" style="font-size:.8rem"></i>
                 </button>
               </form>
@@ -199,75 +243,125 @@
 </div>
 
 <script>
-var rotasInfo  = {{ rotas_info|safe }};
-var DESP_ID    = '{{ despacho.pk }}';
-var STORAGE_KEY = 'despacho_lancar_' + DESP_ID;
+  var rotasInfo = {{ rotas_info| safe }};
+  var DESP_ID = '{{ despacho.pk }}';
+  var STORAGE_KEY = 'despacho_lancar_' + DESP_ID;
 
-var selRota   = document.getElementById('id_rota_entrega');
-var selPgto   = document.getElementById('id_forma_pgto');
-var inpValor  = document.querySelector('[name="valor"]');
-var inpObs    = document.querySelector('[name="observacoes"]');
-var taxaDisplay = document.getElementById('taxa_display');
+  var selRota = document.getElementById('id_rota_entrega');
+  var taxaDisplay = document.getElementById('taxa_display');
+  var container = document.getElementById('pagamentos-container');
+  var btnAdd = document.getElementById('btn-add-pgto');
 
-// ── Persistência: salva seleções no sessionStorage ──────────────────────────
-function salvarEstado() {
-  var estado = {
-    rota:  selRota  ? selRota.value  : '',
-    pgto:  selPgto  ? selPgto.value  : '',
-    valor: inpValor ? inpValor.value : '',
-    obs:   inpObs   ? inpObs.value   : '',
-  };
-  try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(estado)); } catch(e) {}
-}
+  // Prefixo do management_form gerado pelo Django para o formset
+  var FS_PREFIX = 'pagamentoentrega_set';
 
-function restaurarEstado() {
-  try {
-    var raw = sessionStorage.getItem(STORAGE_KEY);
-    if (!raw) return;
-    var estado = JSON.parse(raw);
-    if (selRota  && estado.rota)  { selRota.value  = estado.rota; }
-    if (selPgto  && estado.pgto)  { selPgto.value  = estado.pgto; }
-    // valor e obs NÃO são restaurados — só rota e forma de pagamento
-  } catch(e) {}
-}
+  // ── Taxa display ─────────────────────────────────────────────────────────────
+  function atualizarTaxa() {
+    if (!selRota || !taxaDisplay) return;
+    var rid = selRota.value;
+    taxaDisplay.textContent = (rid && rotasInfo[rid])
+      ? 'R$ ' + parseFloat(rotasInfo[rid]).toFixed(2).replace('.', ',')
+      : '—';
+  }
+  if (selRota) selRota.addEventListener('change', atualizarTaxa);
 
-// ── Taxa display ─────────────────────────────────────────────────────────────
-function atualizarTaxa() {
-  if (!selRota || !taxaDisplay) return;
-  var rid = selRota.value;
-  taxaDisplay.textContent = (rid && rotasInfo[rid])
-    ? 'R$ ' + parseFloat(rotasInfo[rid]).toFixed(2).replace('.', ',')
-    : '—';
-}
+  // ── Persistência: salva rota no sessionStorage ────────────────────────────────
+  function salvarEstado() {
+    try {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
+        rota: selRota ? selRota.value : '',
+      }));
+    } catch (e) { }
+  }
+  function restaurarEstado() {
+    try {
+      var raw = sessionStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      var estado = JSON.parse(raw);
+      if (selRota && estado.rota) selRota.value = estado.rota;
+    } catch (e) { }
+  }
+  if (selRota) selRota.addEventListener('change', salvarEstado);
 
-if (selRota) selRota.addEventListener('change', function() {
-  atualizarTaxa();
-  salvarEstado();
-});
+  // ── Formset: adicionar nova linha de pagamento ────────────────────────────────
+  function getTotalForms() {
+    return document.getElementById('id_' + FS_PREFIX + '-TOTAL_FORMS');
+  }
 
-if (selPgto) selPgto.addEventListener('change', function() {
-  salvarEstado();
-  if (inpValor) { inpValor.value = ''; inpValor.focus(); }
-});
+  if (btnAdd && container) {
+    btnAdd.addEventListener('click', function () {
+      var totalForms = getTotalForms();
+      var idx = parseInt(totalForms.value);
 
-// ── Atalhos de valor ─────────────────────────────────────────────────────────
-function setValor(v) {
-  if (inpValor) { inpValor.value = v; inpValor.focus(); }
-}
+      // Clona a primeira linha do formset como template
+      var template = container.querySelector('.pagamento-row');
+      if (!template) return;
 
-// ── Ao submeter, salva estado (rota + pgto permanecem para próximo) ───────────
-var formEntrega = document.getElementById('formEntrega');
-if (formEntrega) {
-  formEntrega.addEventListener('submit', function() {
-    salvarEstado();
-    // Limpa valor e obs mas mantém rota e pgto visualmente
-    // (o Django vai re-renderizar o form limpo, a restauração reaplica rota/pgto)
+      var nova = template.cloneNode(true);
+      nova.style.display = '';
+      nova.classList.remove('d-none');
+
+      // Atualiza todos os atributos name/id/for com o novo índice
+      nova.querySelectorAll('input, select').forEach(function (el) {
+        if (el.name) el.name = el.name.replace(/-\d+-/, '-' + idx + '-');
+        if (el.id) el.id = el.id.replace(/-\d+-/, '-' + idx + '-');
+        if (el.type === 'checkbox') el.checked = false;
+        else if (el.type !== 'hidden') el.value = '';
+      });
+      nova.querySelectorAll('label').forEach(function (el) {
+        if (el.htmlFor) el.htmlFor = el.htmlFor.replace(/-\d+-/, '-' + idx + '-');
+        el.style.display = 'none'; // esconde label nas linhas extras
+      });
+
+      container.appendChild(nova);
+      totalForms.value = idx + 1;
+
+      // Foca no campo valor da nova linha
+      var novoValor = nova.querySelector('.pagamento-valor');
+      if (novoValor) { novoValor.value = ''; novoValor.focus(); }
+    });
+  }
+
+  // ── Formset: remover linha (marca DELETE) ────────────────────────────────────
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('.btn-remover-pgto');
+    if (!btn) return;
+    var row = btn.closest('.pagamento-row');
+    if (!row) return;
+
+    // Não permite remover se for a única linha visível
+    var linhasVisiveis = Array.from(container.querySelectorAll('.pagamento-row'))
+      .filter(function (r) { return r.style.display !== 'none' && !r.classList.contains('d-none'); });
+    if (linhasVisiveis.length <= 1) return;
+
+    var del = row.querySelector('input[name*="DELETE"]');
+    if (del) { del.checked = true; }
+    row.style.display = 'none';
   });
-}
 
-// ── Inicialização ─────────────────────────────────────────────────────────────
-restaurarEstado();
-atualizarTaxa();
-if (inpValor) { inpValor.focus(); inpValor.select(); }
+  // ── Atalho de valor: aplica na última linha de valor visível ──────────────────
+  function setValor(v) {
+    var visiveis = Array.from(document.querySelectorAll('.pagamento-valor'))
+      .filter(function (el) {
+        var row = el.closest('.pagamento-row');
+        return row && row.style.display !== 'none' && !row.classList.contains('d-none');
+      });
+    if (visiveis.length) {
+      visiveis[visiveis.length - 1].value = v;
+      visiveis[visiveis.length - 1].focus();
+    }
+  }
+
+  // ── Ao submeter: salva estado (rota persiste para próxima entrega) ─────────────
+  var formEntrega = document.getElementById('formEntrega');
+  if (formEntrega) formEntrega.addEventListener('submit', salvarEstado);
+
+  // ── Inicialização ─────────────────────────────────────────────────────────────
+  restaurarEstado();
+  atualizarTaxa();
+
+  // Foca no primeiro campo de valor disponível
+  var primVal = document.querySelector('.pagamento-valor');
+  if (primVal) { primVal.focus(); primVal.select(); }
 </script>
 {% endblock %}

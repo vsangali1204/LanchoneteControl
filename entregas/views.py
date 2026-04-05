@@ -4,8 +4,13 @@ from django.utils import timezone
 from datetime import date
 from decimal import Decimal
 
-from .models import Despacho, Entrega, Motoboy, Rota, Retirada, PAGAMENTO_CHOICES
-from .forms import DespachoForm, DespachoEditForm, EntregaRetornoForm, EntregaEditForm, MotoboyForm, RotaForm, RetiradaForm
+from .models import Despacho, Entrega, PagamentoEntrega, Motoboy, Rota, Retirada, PAGAMENTO_CHOICES
+from .forms import (
+    DespachoForm, DespachoEditForm,
+    EntregaRetornoForm, PagamentoFormSet,
+    EntregaEditForm,
+    MotoboyForm, RotaForm, RetiradaForm,
+)
 
 
 # ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -78,11 +83,12 @@ def dashboard_caixa(request):
     except ValueError:
         data_ref = date.today()
 
-    entregas_qs = Entrega.objects.filter(
-        despacho__data_saida__date=data_ref,
-        despacho__status='finalizado',
+    # Pagamentos agora vêm de PagamentoEntrega
+    pgto_entregas_qs = PagamentoEntrega.objects.filter(
+        entrega__despacho__data_saida__date=data_ref,
+        entrega__despacho__status='finalizado',
     ).values_list('forma_pagamento', 'valor')
-    pgto_entregas = _resumo_pagamentos(entregas_qs)
+    pgto_entregas = _resumo_pagamentos(pgto_entregas_qs)
     total_entregas = sum(pgto_entregas.values())
     qtd_entregas = Entrega.objects.filter(
         despacho__data_saida__date=data_ref,
@@ -184,27 +190,33 @@ def despacho_lancar(request, pk):
     if despacho.status == 'finalizado':
         return redirect('entregas:despacho_resumo', pk=pk)
 
-    entregas = despacho.entregas.select_related('rota').all()
+    entregas = despacho.entregas.prefetch_related('pagamentos', 'rota').all()
     pode_adicionar = despacho.qtd_lancada < despacho.qtd_saida
-    form = EntregaRetornoForm() if pode_adicionar else None
 
     if request.method == 'POST':
         if 'add_entrega' in request.POST:
             if not pode_adicionar:
                 messages.error(request, f'Limite atingido! Despacho saiu com {despacho.qtd_saida} entrega(s).')
-            else:
-                form = EntregaRetornoForm(request.POST)
-                if form.is_valid():
-                    e = form.save(commit=False)
-                    e.despacho = despacho
-                    e.save()
-                    lancadas = despacho.entregas.count()
-                    faltam = despacho.qtd_saida - lancadas
-                    if faltam == 0:
-                        messages.success(request, f'Entrega {lancadas}/{despacho.qtd_saida} — tudo lançado, finalize!')
-                    else:
-                        messages.success(request, f'Entrega {lancadas}/{despacho.qtd_saida} — faltam {faltam}.')
-            return redirect('entregas:despacho_lancar', pk=pk)
+                return redirect('entregas:despacho_lancar', pk=pk)
+
+            form = EntregaRetornoForm(request.POST)
+            pagamento_fs = PagamentoFormSet(request.POST)
+
+            if form.is_valid() and pagamento_fs.is_valid():
+                entrega = form.save(commit=False)
+                entrega.despacho = despacho
+                entrega.save()
+                pagamento_fs.instance = entrega
+                pagamento_fs.save()
+
+                lancadas = despacho.entregas.count()
+                faltam = despacho.qtd_saida - lancadas
+                if faltam == 0:
+                    messages.success(request, f'Entrega {lancadas}/{despacho.qtd_saida} — tudo lançado, finalize!')
+                else:
+                    messages.success(request, f'Entrega {lancadas}/{despacho.qtd_saida} — faltam {faltam}.')
+                return redirect('entregas:despacho_lancar', pk=pk)
+            # se inválido, re-renderiza com erros (form + pagamento_fs com erros)
 
         elif 'remover_entrega' in request.POST:
             entrega_id = request.POST.get('entrega_id')
@@ -222,16 +234,24 @@ def despacho_lancar(request, pk):
             else:
                 messages.error(request, f'Faltam {despacho.faltam} entrega(s) para finalizar.')
 
-    rotas_info = {str(r.pk): str(r.taxa_entrega) for r in Rota.objects.filter(ativa=True)}
+    else:
+        form = EntregaRetornoForm() if pode_adicionar else None
+        pagamento_fs = PagamentoFormSet() if pode_adicionar else None
+
+    # Totais por forma agora somam os PagamentoEntrega
     totais_pgto = {}
     for e in entregas:
-        label = e.get_forma_pagamento_display()
-        totais_pgto[label] = totais_pgto.get(label, Decimal('0')) + (e.valor or Decimal('0'))
+        for p in e.pagamentos.all():
+            label = p.get_forma_pagamento_display()
+            totais_pgto[label] = totais_pgto.get(label, Decimal('0')) + (p.valor or Decimal('0'))
+
+    rotas_info = {str(r.pk): str(r.taxa_entrega) for r in Rota.objects.filter(ativa=True)}
 
     context = {
         'despacho': despacho,
         'entregas': entregas,
         'form': form,
+        'pagamento_fs': pagamento_fs,
         'pode_adicionar': pode_adicionar,
         'rotas_info': rotas_info,
         'totais_pgto': totais_pgto,
@@ -241,7 +261,7 @@ def despacho_lancar(request, pk):
 
 def despacho_resumo(request, pk):
     despacho = get_object_or_404(Despacho, pk=pk)
-    entregas = despacho.entregas.select_related('rota').all()
+    entregas = despacho.entregas.prefetch_related('pagamentos', 'rota').all()
     return render(request, 'entregas/despacho_resumo.html', {'despacho': despacho, 'entregas': entregas})
 
 
@@ -318,15 +338,22 @@ def entrega_editar(request, pk):
     despacho = entrega.despacho
     if request.method == 'POST':
         form = EntregaEditForm(request.POST, instance=entrega)
-        if form.is_valid():
+        pagamento_fs = PagamentoFormSet(request.POST, instance=entrega)
+        if form.is_valid() and pagamento_fs.is_valid():
             form.save()
+            pagamento_fs.save()
             messages.success(request, f'Entrega #{entrega.pk} atualizada.')
             return redirect('entregas:despacho_lancar', pk=despacho.pk)
     else:
         form = EntregaEditForm(instance=entrega)
+        pagamento_fs = PagamentoFormSet(instance=entrega)
     rotas_info = {str(r.pk): str(r.taxa_entrega) for r in Rota.objects.filter(ativa=True)}
     return render(request, 'entregas/entrega_editar.html', {
-        'form': form, 'entrega': entrega, 'despacho': despacho, 'rotas_info': rotas_info,
+        'form': form,
+        'pagamento_fs': pagamento_fs,
+        'entrega': entrega,
+        'despacho': despacho,
+        'rotas_info': rotas_info,
     })
 
 
@@ -353,7 +380,7 @@ def relatorio_motoboy(request):
         status='finalizado',
         data_saida__date__gte=data_inicio,
         data_saida__date__lte=data_fim,
-    ).select_related('motoboy').prefetch_related('entregas__rota')
+    ).select_related('motoboy').prefetch_related('entregas__rota', 'entregas__pagamentos')
     if motoboy_id:
         despachos = despachos.filter(motoboy_id=motoboy_id)
     resumo = {}

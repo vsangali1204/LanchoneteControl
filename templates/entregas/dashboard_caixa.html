@@ -15,10 +15,8 @@
     </div>
     <!-- Seletor de data -->
     <form method="get" class="d-flex gap-2 align-items-center">
-      <input type="date" name="data" value="{{ data_str }}"
-             class="form-control form-control-sm"
-             style="background:#1e1e1e;border-color:#333;color:#fff;width:150px"
-             onchange="this.form.submit()">
+      <input type="date" name="data" value="{{ data_str }}" class="form-control form-control-sm"
+        style="background:#1e1e1e;border-color:#333;color:#fff;width:150px" onchange="this.form.submit()">
     </form>
   </div>
 
@@ -76,13 +74,15 @@
           <tr>
             <td>
               {% if forma == 'dinheiro' %}
-                <span style="color:#5cb85c"><i class="bi bi-cash me-2"></i>Dinheiro</span>
+              <span style="color:#5cb85c"><i class="bi bi-cash me-2"></i>Dinheiro</span>
               {% elif forma == 'cartao' %}
-                <span style="color:#4da6ff"><i class="bi bi-credit-card me-2"></i>Cartão</span>
+              <span style="color:#4da6ff"><i class="bi bi-credit-card me-2"></i>Cartão</span>
               {% elif forma == 'pix' %}
-                <span style="color:#2898a7"><i class="bi bi-pix me-2"></i>Pix</span>
+              <span style="color:#2898a7"><i class="bi bi-pix me-2"></i>Pix</span>
+              {% elif forma == 'online' %}
+              <span style="color:#9d6fe8"><i class="bi bi-phone me-2"></i>Online</span>
               {% else %}
-                <span style="color:#9d6fe8"><i class="bi bi-phone me-2"></i>Online</span>
+              <span style="color:#6e8feb"><i class="bi bi-phone me-2"></i>Yooga</span>
               {% endif %}
             </td>
             <td class="text-end fw-medium text-white">R$ {{ e|floatformat:2 }}</td>

@@ -27,13 +27,13 @@
         <div class="col-6 col-md-3">
             <div class="stat-card text-center">
                 <div class="stat-lbl">Dinheiro</div>
-                <div class="stat-val text-success" style="font-size:1.4rem">R${{ despacho.total_dinheiro|floatformat:2 }}</div>
+                <div class="stat-val text-success" style="font-size:1.4rem">R$ {{ despacho.total_dinheiro|floatformat:2 }}</div>
             </div>
         </div>
         <div class="col-6 col-md-3">
             <div class="stat-card text-center">
                 <div class="stat-lbl">Total Taxas</div>
-                <div class="stat-val text-warning" style="font-size:1.4rem">R${{ despacho.total_taxa|floatformat:2 }}</div>
+                <div class="stat-val text-warning" style="font-size:1.4rem">R$ {{ despacho.total_taxa|floatformat:2 }}</div>
             </div>
         </div>
         <div class="col-6 col-md-3">
@@ -50,32 +50,45 @@
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table mb-0">
-                    <thead><tr><th>#</th><th>Rota</th><th>Cliente</th><th>Pagamento</th><th>Valor</th><th>Taxa</th></tr></thead>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Rota</th>
+                            <th>Pagamento</th>
+                            <th>Total</th>
+                            <th>Taxa</th>
+                        </tr>
+                    </thead>
                     <tbody>
                         {% for e in entregas %}
                         <tr>
                             <td style="color:var(--muted)">{{ forloop.counter }}</td>
                             <td class="fw-medium">{{ e.rota.nome }}</td>
-                            <td style="color:var(--muted)">{{ e.cliente|default:"—" }}</td>
                             <td>
-                                {% if e.forma_pagamento == 'dinheiro' %}
+                                {% for p in e.pagamentos.all %}
+                                {% if p.forma_pagamento == 'dinheiro' %}
                                 <span class="badge" style="background:rgba(40,167,69,.2);color:#5cb85c"><i class="bi bi-cash me-1"></i>Dinheiro</span>
-                                {% elif e.forma_pagamento == 'cartao' %}
+                                {% elif p.forma_pagamento == 'cartao' %}
                                 <span class="badge" style="background:rgba(13,110,253,.2);color:#4da6ff"><i class="bi bi-credit-card me-1"></i>Cartão</span>
-                                {% elif e.forma_pagamento == 'pix' %}
-                                <span class="badge" style="background:rgba(13,110,253,.2);color:#2898a7"><i class="bi bi-credit-card me-1"></i>Pix</span>
-                                {% else %}
+                                {% elif p.forma_pagamento == 'pix' %}
+                                <span class="badge" style="background:rgba(40,167,69,.2);color:#2898a7"><i class="bi bi-pix me-1"></i>Pix</span>
+                                {% elif p.forma_pagamento == 'online' %}
                                 <span class="badge" style="background:rgba(111,66,193,.2);color:#9d6fe8"><i class="bi bi-phone me-1"></i>Online</span>
+                                {% else %}
+                                <span class="badge" style="background:rgba(110,142,235,.2);color:#6e8feb"><i class="bi bi-phone me-1"></i>Yooga</span>
                                 {% endif %}
+                                <span class="text-white">R$ {{ p.valor|floatformat:2 }}</span>
+                                {% if not forloop.last %}<span style="color:#555"> + </span>{% endif %}
+                                {% endfor %}
                             </td>
-                            <td class="text-success">{% if e.valor %}R$ {{ e.valor|floatformat:2 }}{% else %}—{% endif %}</td>
+                            <td class="text-success">R$ {{ e.valor_total|floatformat:2 }}</td>
                             <td class="text-warning">R$ {{ e.rota.taxa_entrega|floatformat:2 }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
                     <tfoot>
                         <tr class="fw-bold">
-                            <td colspan="4">TOTAL</td>
+                            <td colspan="3">TOTAL</td>
                             <td class="text-success">R$ {{ despacho.total_dinheiro|floatformat:2 }}</td>
                             <td class="text-warning">R$ {{ despacho.total_taxa|floatformat:2 }}</td>
                         </tr>

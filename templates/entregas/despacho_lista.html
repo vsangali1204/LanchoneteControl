@@ -54,13 +54,16 @@
                             <td class="text-warning">R$ {{ d.total_taxa|floatformat:2 }}</td>
                             <td><span class="badge bs-{{ d.status }} rounded-pill px-2">{{ d.get_status_display }}</span></td>
                             <td>
-                                {% if d.status == 'em_rota' %}
-                                <a href="{% url 'entregas:despacho_retorno' d.pk %}" class="btn btn-sm btn-outline-success"><i class="bi bi-arrow-return-left"></i></a>
-                                {% elif d.status == 'retornando' %}
-                                <a href="{% url 'entregas:despacho_lancar' d.pk %}" class="btn btn-sm btn-verm">Lançar</a>
-                                {% else %}
-                                <a href="{% url 'entregas:despacho_resumo' d.pk %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-eye"></i></a>
-                                {% endif %}
+                                <div class="d-flex gap-1">
+                                  {% if d.status == 'em_rota' %}
+                                  <a href="{% url 'entregas:despacho_retorno' d.pk %}" class="btn btn-sm btn-outline-success" title="Registrar retorno"><i class="bi bi-arrow-return-left"></i></a>
+                                  {% elif d.status == 'retornando' %}
+                                  <a href="{% url 'entregas:despacho_lancar' d.pk %}" class="btn btn-sm btn-verm" title="Lançar entregas">Lançar</a>
+                                  {% else %}
+                                  <a href="{% url 'entregas:despacho_resumo' d.pk %}" class="btn btn-sm btn-outline-secondary" title="Ver resumo"><i class="bi bi-eye"></i></a>
+                                  {% endif %}
+                                  <a href="{% url 'entregas:despacho_editar' d.pk %}" class="btn btn-sm btn-outline-warning" title="Editar despacho"><i class="bi bi-pencil"></i></a>
+                                </div>
                             </td>
                         </tr>
                         {% empty %}

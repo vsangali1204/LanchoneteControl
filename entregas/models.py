@@ -65,7 +65,11 @@ class Despacho(models.Model):
 
     @property
     def total_dinheiro(self):
-        return sum(e.valor or 0 for e in self.entregas.filter(forma_pagamento='dinheiro'))
+        from decimal import Decimal
+        return sum(
+            p.valor for e in self.entregas.all()
+            for p in e.pagamentos.filter(forma_pagamento='dinheiro')
+        ) or Decimal('0')
 
     @property
     def total_taxa(self):
@@ -94,6 +98,7 @@ PAGAMENTO_CHOICES = [
     ('cartao', 'Cartão'),
     ('online', 'Pago Online'),
     ('pix', 'Pix'),
+    ('yooga', 'Yooga'),
 ]
 
 
@@ -114,18 +119,43 @@ class Retirada(models.Model):
 
 
 class Entrega(models.Model):
-    PAGAMENTO_CHOICES = PAGAMENTO_CHOICES
-
     despacho = models.ForeignKey(Despacho, on_delete=models.CASCADE, related_name='entregas')
     rota = models.ForeignKey(Rota, on_delete=models.PROTECT, related_name='entregas')
-    forma_pagamento = models.CharField(max_length=20, choices=PAGAMENTO_CHOICES)
-    valor = models.DecimalField(max_digits=10, decimal_places=2)  # removido null/blank
     observacoes = models.CharField(max_length=255, blank=True)
 
+    # forma_pagamento e valor agora ficam em PagamentoEntrega (relação 1-N)
+
+    @property
+    def valor_total(self):
+        from decimal import Decimal
+        return sum((p.valor for p in self.pagamentos.all()), Decimal('0'))
+
+    @property
+    def forma_pagamento_display(self):
+        """Resumo das formas para exibição."""
+        return ' + '.join(p.get_forma_pagamento_display() for p in self.pagamentos.all())
+
     def __str__(self):
-        return f"Entrega #{self.pk} — {self.rota.nome} — {self.get_forma_pagamento_display()}"
+        return f"Entrega #{self.pk} — {self.rota.nome}"
 
     class Meta:
         verbose_name = 'Entrega'
         verbose_name_plural = 'Entregas'
+        ordering = ['pk']
+
+
+class PagamentoEntrega(models.Model):
+    """Pagamento parcial de uma entrega (pode haver mais de um por entrega)."""
+    PAGAMENTO_CHOICES = PAGAMENTO_CHOICES
+
+    entrega = models.ForeignKey(Entrega, on_delete=models.CASCADE, related_name='pagamentos')
+    forma_pagamento = models.CharField(max_length=20, choices=PAGAMENTO_CHOICES)
+    valor = models.DecimalField(max_digits=10, decimal_places=2)
+
+    def __str__(self):
+        return f"{self.get_forma_pagamento_display()} R$ {self.valor}"
+
+    class Meta:
+        verbose_name = 'Pagamento'
+        verbose_name_plural = 'Pagamentos'
         ordering = ['pk']
